@@ -95,6 +95,7 @@ manager.terminate(card['employee_id'], "completed")
 - **[AGENT_GUIDE.md](./AGENT_GUIDE.md)** - ⭐ Agent 使用指南 (什么时候用 SubAgent)
 - **[POST_INSTALL.md](./POST_INSTALL.md)** - ⭐ 安装后配置指南 (必须阅读!)
 - **[CONFIGURATION.md](./CONFIGURATION.md)** - ⭐ 自定义 Shared Hub 名称
+- **[OPENCLAW_COMPATIBILITY.md](./OPENCLAW_COMPATIBILITY.md)** - ⭐ OpenClaw 版本兼容性
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - 快速参考手册
 - **[INSTALL_CHECKLIST.md](./INSTALL_CHECKLIST.md)** - 安装前检查清单
 
