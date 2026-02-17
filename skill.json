@@ -42,7 +42,9 @@
     "capabilities": [
       "multi-agent",
       "subagent-management",
-      "badge-generation"
+      "badge-generation",
+      "ticket-management",
+      "deadlock-detection"
     ],
     "forAgents": {
       "whenToUse": "复杂多角色协作任务(>30分钟或失败影响大)",

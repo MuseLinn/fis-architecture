@@ -158,7 +158,42 @@ if report["deadlock_found"]:
     print(f"已解决: {report['resolved']}")
 ```
 
-### 3.3 技能注册 (Skill Registry)
+### 3.3 任务票据管理 (Ticket Manager)
+
+任务票据生命周期管理：
+
+```python
+from ticket_manager import TicketManager
+
+manager = TicketManager()
+
+# 创建票据
+ticket = manager.create_ticket(
+    title="实现 PTVF 滤波算法",
+    description="基于 SFCW 信号...",
+    assignee="cybermao",
+    priority=2  # 1=最高, 5=最低
+)
+
+# 开始处理
+manager.start_ticket(ticket['ticket_id'])
+
+# 添加进度
+manager.add_progress_note(ticket['ticket_id'], "完成数学模型推导")
+
+# 完成票据
+manager.complete_ticket(ticket['ticket_id'], result="算法实现完成，SNR提升3dB")
+
+# 查看统计
+stats = manager.get_stats()
+print(f"活跃: {stats['active']}, 已完成: {stats['completed']}")
+```
+
+票据存储路径：
+- 活跃: `research-uav-gpr/tickets/active/`
+- 已完成: `research-uav-gpr/tickets/completed/`
+
+### 3.4 技能注册 (Skill Registry)
 
 Agent 能力发现与调用：
 
