@@ -62,9 +62,19 @@ class SubAgentLifecycleManager:
               role: SubAgentRole,
               task_description: str,
               timeout_minutes: int = 60,
-              resources: list = None) -> dict:
+              resources: list = None,
+              badge_format: str = "auto") -> dict:
         """
         创建子代理（发工卡）
+        
+        Args:
+            name: 子代理名称
+            role: 角色 (WORKER/REVIEWER/RESEARCHER/FORMATTER)
+            task_description: 任务描述
+            timeout_minutes: 超时时间
+            resources: 授权资源列表
+            badge_format: 工卡格式 ("text", "image", "both", "auto")
+                         "auto" - 根据环境自动选择 (默认image if available)
         
         Returns:
             工卡信息 dict
@@ -129,7 +139,70 @@ class SubAgentLifecycleManager:
         # 创建工作区目录
         self._init_workspace(workspace_path, subagent_card)
         
+        # 生成工卡 (根据 badge_format 选择格式)
+        badge_result = self._generate_badge_for_spawn(subagent_card, badge_format)
+        subagent_card["badge"] = badge_result
+        
         return subagent_card
+    
+    def _generate_badge_for_spawn(self, card: dict, badge_format: str) -> dict:
+        """
+        根据格式生成工卡
+        
+        Returns:
+            dict with 'text', 'image', or both
+        """
+        result = {}
+        
+        # Determine format
+        if badge_format == "auto":
+            # Check if PIL is available for image generation
+            try:
+                from PIL import Image
+                badge_format = "image"  # Default to image if PIL available
+            except ImportError:
+                badge_format = "text"
+        
+        # Generate text badge
+        if badge_format in ["text", "both"]:
+            result["text"] = self.generate_badge(card['employee_id'])
+        
+        # Generate image badge
+        if badge_format in ["image", "both"]:
+            try:
+                # Try v6 generator first (CryptoPunks style)
+                import sys
+                from pathlib import Path
+                sys.path.insert(0, str(Path(__file__).parent))
+                from badge_generator_v6 import BadgeGeneratorV6
+                
+                generator = BadgeGeneratorV6()
+                image_path = generator.create_badge({
+                    'name': card['name'],
+                    'id': card['employee_id'],
+                    'role': card['role'].upper(),
+                    'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
+                    'soul': f'"{card["task"]["description"][:40]}..."' if len(card["task"]["description"]) > 40 else f'"{card["task"]["description"]}"',
+                    'responsibilities': [
+                        f"Execute {card['role']} tasks",
+                        "Report to parent agent",
+                        "Maintain workspace integrity",
+                        "Complete before deadline"
+                    ],
+                    'output_formats': 'MARKDOWN | JSON | TXT',
+                    'barcode_id': card['employee_id'],
+                    'status': card['status'].upper(),
+                })
+                result["image"] = image_path
+            except Exception as e:
+                # Fallback to older badge_image_pil
+                try:
+                    image_path = self.generate_badge_image(card['employee_id'])
+                    result["image"] = image_path
+                except Exception as e2:
+                    result["image_error"] = f"Failed to generate image badge: {e}, {e2}"
+        
+        return result
     
     def _init_workspace(self, workspace_path: Path, card: dict):
         """初始化子代理工作区"""
