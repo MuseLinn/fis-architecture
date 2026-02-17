@@ -7,9 +7,10 @@ import json
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+from fis_config import get_shared_hub_path
 
-# Base paths
-SHARED_HUB = Path.home() / ".openclaw" / "research-uav-gpr" / ".fis3.1"
+# Base paths - using configurable shared hub
+SHARED_HUB = get_shared_hub_path() / ".fis3.1"
 MEMORIES_DIR = SHARED_HUB / "memories"
 
 # TTL settings

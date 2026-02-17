@@ -270,7 +270,8 @@ if __name__ == "__main__":
     print("=" * 50)
     
     # Load subagents
-    registry_file = Path.home() / ".openclaw" / "research-uav-gpr" / ".fis3.1" / "subagent_registry.json"
+    from fis_config import get_shared_hub_path
+    registry_file = get_shared_hub_path() / ".fis3.1" / "subagent_registry.json"
     
     if registry_file.exists():
         with open(registry_file) as f:

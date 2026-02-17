@@ -17,7 +17,7 @@ python3 examples/init_fis31.py
 ```
 
 这会创建：
-- 共享中心 `research-uav-gpr/.fis3.1/`
+- 共享中心 `fis-hub/.fis3.1/`
 - 你的 Agent 扩展 `workspace/.fis3.1/`
 
 详见 [POST_INSTALL.md](./POST_INSTALL.md)
@@ -201,7 +201,7 @@ for worker in workers:
 ## FIS 3.1 Lite 维护
 ```python
 import sys
-sys.path.insert(0, '/home/muselinn/.openclaw/research-uav-gpr/.fis3.1/lib')
+sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
 from subagent_lifecycle import SubAgentLifecycleManager
 
 manager = SubAgentLifecycleManager("你的Agent名")

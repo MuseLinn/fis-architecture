@@ -8,8 +8,9 @@ import uuid
 from pathlib import Path
 from datetime import datetime, timedelta
 from enum import Enum
+from fis_config import get_shared_hub_path
 
-SHARED_HUB = Path.home() / ".openclaw" / "research-uav-gpr" / ".fis3.1"
+SHARED_HUB = get_shared_hub_path() / ".fis3.1"
 SUBAGENT_REGISTRY = SHARED_HUB / "subagent_registry.json"
 
 class SubAgentStatus(Enum):
@@ -94,7 +95,7 @@ class SubAgentLifecycleManager:
                 "path": str(workspace_path),
                 "allowed_dirs": [
                     str(workspace_path),  # 自己的工作区
-                    str(SHARED_HUB.parent)  # 只读访问 research-uav-gpr
+                    str(SHARED_HUB.parent)  # 只读访问共享中心
                 ],
                 "forbidden_dirs": [
                     str(Path.home() / ".openclaw" / "workspace"),  # CyberMao核心

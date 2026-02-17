@@ -44,7 +44,7 @@ python3 examples/init_fis31.py
 安装本 Skill 将创建以下目录：
 ```
 ~/.openclaw/
-├── research-uav-gpr/.fis3.1/     # 共享基础设施 (手动创建)
+├── fis-hub/.fis3.1/     # 共享基础设施 (手动创建)
 ├── workspace/.fis3.1/             # CyberMao 扩展 (手动创建)
 ├── workspace-radar/.fis3.1/       # Pulse 扩展 (可选)
 └── workspace-subagent_{id}/       # 动态创建 (自动清理)
@@ -94,6 +94,7 @@ manager.terminate(card['employee_id'], "completed")
 - **[SKILL.md](./SKILL.md)** - 完整架构文档
 - **[AGENT_GUIDE.md](./AGENT_GUIDE.md)** - ⭐ Agent 使用指南 (什么时候用 SubAgent)
 - **[POST_INSTALL.md](./POST_INSTALL.md)** - ⭐ 安装后配置指南 (必须阅读!)
+- **[CONFIGURATION.md](./CONFIGURATION.md)** - ⭐ 自定义 Shared Hub 名称
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - 快速参考手册
 - **[INSTALL_CHECKLIST.md](./INSTALL_CHECKLIST.md)** - 安装前检查清单
 
@@ -112,7 +113,7 @@ manager.terminate(card['employee_id'], "completed")
 ├── workspace-painter/            # Painter (视觉专家)
 │   └── .fis3.1/
 │
-└── research-uav-gpr/.fis3.1/    # 共享中心
+└── fis-hub/.fis3.1/    # 共享中心
     ├── memories/                 # 分层共享记忆
     ├── skills/                   # 技能注册表
     ├── lib/                      # Python 库

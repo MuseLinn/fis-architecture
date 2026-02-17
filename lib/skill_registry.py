@@ -6,8 +6,9 @@ FIS 3.1 Lite - Skill Registry
 import json
 from pathlib import Path
 from datetime import datetime
+from fis_config import get_shared_hub_path
 
-SHARED_HUB = Path.home() / ".openclaw" / "research-uav-gpr" / ".fis3.1"
+SHARED_HUB = get_shared_hub_path() / ".fis3.1"
 SKILLS_DIR = SHARED_HUB / "skills"
 MANIFESTS_DIR = SKILLS_DIR / "manifests"
 REGISTRY_FILE = SKILLS_DIR / "registry.json"

@@ -8,7 +8,7 @@
 
 ```
 ~/.openclaw/
-├── research-uav-gpr/.fis3.1/        # ⭐ 共享基础设施 (自动创建)
+├── fis-hub/.fis3.1/        # ⭐ 共享基础设施 (自动创建)
 │   ├── memories/                    # 共享记忆存储
 │   │   ├── working/                 # 工作记忆 (TTL: 1h)
 │   │   ├── short_term/              # 短期记忆 (TTL: 24h)
@@ -59,7 +59,7 @@ python3 ~/.openclaw/system/scripts/fis_subagent_cleanup.py
 - **Core Files 保护**: 绝不修改 `MEMORY.md`, `HEARTBEAT.md` 等核心文件
 - **Agent 隔离**: 各 Agent 工作区相互独立
 - **权限控制**: SubAgent 只能访问授权资源
-- **备份建议**: 重要数据请定期备份 `research-uav-gpr/` 目录
+- **备份建议**: 重要数据请定期备份 `fis-hub/` 目录
 
 ### 5. 卸载说明
 
@@ -73,7 +73,7 @@ pkill -f subagent
 rm -rf ~/.openclaw/workspace-subagent_*
 
 # 3. 清理 FIS 3.1 目录 (可选)
-rm -rf ~/.openclaw/research-uav-gpr/.fis3.1/
+rm -rf ~/.openclaw/fis-hub/.fis3.1/
 rm -rf ~/.openclaw/workspace/.fis3.1/
 rm -rf ~/.openclaw/workspace-*/.fis3.1/
 
@@ -85,7 +85,7 @@ rm -rf ~/.openclaw/workspace-*/.fis3.1/
 
 在安装前，请确认您已阅读并理解上述改动：
 
-- [ ] 我了解将创建 `research-uav-gpr/.fis3.1/` 目录结构
+- [ ] 我了解将创建 `fis-hub/.fis3.1/` 目录结构
 - [ ] 我了解各 Agent 将获得 `.fis3.1/` 扩展目录
 - [ ] 我了解 SubAgent 终止时会自动删除工作区文件夹
 - [ ] 我了解已删除的 SubAgent 文件夹不可恢复

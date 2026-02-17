@@ -31,7 +31,7 @@ python3 examples/init_fis31.py
 ```
 
 这个脚本会：
-1. **创建共享中心** `research-uav-gpr/.fis3.1/`
+1. **创建共享中心** `fis-hub/.fis3.1/`
    - memories/ (分层共享记忆)
    - skills/ (技能注册表)
    - lib/ (Python 库)
@@ -46,7 +46,7 @@ python3 examples/init_fis31.py
 
 ```bash
 # 检查共享中心
-ls ~/.openclaw/research-uav-gpr/.fis3.1/
+ls ~/.openclaw/fis-hub/.fis3.1/
 
 # 检查 Agent 扩展
 ls ~/.openclaw/workspace/.fis3.1/
@@ -54,7 +54,7 @@ ls ~/.openclaw/workspace/.fis3.1/
 # 测试导入
 python3 -c "
 import sys
-sys.path.insert(0, '/home/muselinn/.openclaw/research-uav-gpr/.fis3.1/lib')
+sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
 from subagent_lifecycle import SubAgentLifecycleManager
 print('✅ FIS 3.1 configured successfully')
 "
@@ -93,7 +93,7 @@ python3 examples/setup_agent_extension.py painter
 
 ## 配置后检查清单
 
-- [ ] 共享中心已创建: `research-uav-gpr/.fis3.1/`
+- [ ] 共享中心已创建: `fis-hub/.fis3.1/`
 - [ ] Agent 扩展已创建: `workspace/.fis3.1/`
 - [ ] 可以导入 `subagent_lifecycle`
 - [ ] 可以创建 SubAgent
@@ -108,7 +108,7 @@ python3 examples/setup_agent_extension.py painter
 **解决**:
 ```python
 import sys
-sys.path.insert(0, '/home/muselinn/.openclaw/research-uav-gpr/.fis3.1/lib')
+sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
 ```
 
 ### 问题: "subagent_registry.json not found"

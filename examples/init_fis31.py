@@ -10,13 +10,20 @@ from pathlib import Path
 # Add skill lib to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
 
-def init_shared_hub():
+def init_shared_hub(hub_name: str = None):
     """初始化共享中心 (Shared Hub)"""
+    from fis_config import get_shared_hub_path, set_shared_hub_name
+    
     print("\n📦 Step 1: Initialize Shared Hub")
     print("-" * 40)
     
+    # Allow custom hub name
+    if hub_name:
+        set_shared_hub_name(hub_name)
+        print(f"Using custom hub name: {hub_name}")
+    
     openclaw_dir = Path.home() / ".openclaw"
-    fis31_dir = openclaw_dir / "research-uav-gpr" / ".fis3.1"
+    fis31_dir = get_shared_hub_path() / ".fis3.1"
     
     # Create structure
     dirs = [
@@ -62,6 +69,8 @@ def init_shared_hub():
 
 def init_agent_extension(agent_name: str):
     """初始化单个 Agent 的分形扩展"""
+    from fis_config import get_shared_hub_path
+    
     print(f"\n🔧 Step 2: Initialize Agent Extension for '{agent_name}'")
     print("-" * 40)
     
@@ -115,11 +124,16 @@ def init_fis31():
     print("🚀 FIS 3.1 Lite Initialization")
     print("=" * 50)
     print("\nThis will set up:")
-    print("  1. Shared Hub (research-uav-gpr/.fis3.1/)")
+    print("  1. Shared Hub (fis-hub/.fis3.1/ or custom name)")
     print("  2. Agent Extensions (workspace*/.fis3.1/)")
     
+    # Ask for custom hub name
+    hub_name = input("\nEnter shared hub name (press Enter for default 'fis-hub'): ").strip()
+    if not hub_name:
+        hub_name = None
+    
     # Step 1: Shared Hub
-    shared_hub = init_shared_hub()
+    shared_hub = init_shared_hub(hub_name)
     
     # Step 2: Ask for agent extensions
     print("\n" + "=" * 50)

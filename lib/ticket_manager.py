@@ -8,8 +8,9 @@ import re
 from pathlib import Path
 from datetime import datetime
 from enum import Enum
+from fis_config import get_shared_hub_path
 
-SHARED_HUB = Path.home() / ".openclaw" / "research-uav-gpr"
+SHARED_HUB = get_shared_hub_path()
 TICKETS_DIR = SHARED_HUB / "tickets"
 
 class TicketStatus(Enum):
