@@ -49,6 +49,11 @@
       "whenNotToUse": "简单查询、单线任务、10分钟内可完成",
       "entryPoint": "AGENT_GUIDE.md",
       "keyDecision": "使用决策树判断是否创建 SubAgent"
+    },
+    "postInstall": {
+      "required": true,
+      "message": "⚠️ 必须运行初始化脚本: python3 examples/init_fis31.py",
+      "docs": "POST_INSTALL.md"
     }
   }
 }

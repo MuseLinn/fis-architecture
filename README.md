@@ -16,35 +16,36 @@
 - **SubAgent 生命周期** - 工卡系统 + 自动清理
 - **工卡图片生成** - 机票风格，支持批量生成
 
-## 📦 安装
+## 📦 安装与配置
 
-### 安装前检查（⚠️ 必读）
+### ⚠️ 重要：两步流程
 
-**[INSTALL_CHECKLIST.md](./INSTALL_CHECKLIST.md)** - 文件夹改动告知义务
+**Step 1: 安装 Skill**
+```bash
+cd ~/.openclaw/workspace/skills
+git clone https://github.com/cybermao/fis-architecture.git
+```
+
+**Step 2: 配置 FIS 架构 (必须!)**
+```bash
+cd fis-architecture
+python3 examples/init_fis31.py
+```
+
+**安装 ≠ 配置完成！** 必须运行初始化脚本创建目录结构。
+
+### 安装前检查
+
+**[INSTALL_CHECKLIST.md](./INSTALL_CHECKLIST.md)** - 文件夹改动告知义务  
+**[POST_INSTALL.md](./POST_INSTALL.md)** - 详细配置指南
 
 安装本 Skill 将创建以下目录：
 ```
 ~/.openclaw/
-├── research-uav-gpr/.fis3.1/     # 共享基础设施
-├── workspace/.fis3.1/             # CyberMao 扩展
-├── workspace-radar/.fis3.1/       # Pulse 扩展
-├── workspace-painter/.fis3.1/     # Painter 扩展
+├── research-uav-gpr/.fis3.1/     # 共享基础设施 (手动创建)
+├── workspace/.fis3.1/             # CyberMao 扩展 (手动创建)
+├── workspace-radar/.fis3.1/       # Pulse 扩展 (可选)
 └── workspace-subagent_{id}/       # 动态创建 (自动清理)
-```
-
-### 快速安装
-
-```bash
-# Clone 到 OpenClaw skills 目录
-cd ~/.openclaw/workspace/skills
-git clone https://github.com/cybermao/fis-architecture.git
-
-# 运行初始化
-cd fis-architecture
-python3 examples/init_fis31.py
-
-# 验证安装
-python3 -c "from lib.subagent_lifecycle import SubAgentLifecycleManager; print('✅ FIS 3.1 Lite installed')"
 ```
 
 ## 🚀 快速开始
@@ -90,6 +91,7 @@ manager.terminate(card['employee_id'], "completed")
 
 - **[SKILL.md](./SKILL.md)** - 完整架构文档
 - **[AGENT_GUIDE.md](./AGENT_GUIDE.md)** - ⭐ Agent 使用指南 (什么时候用 SubAgent)
+- **[POST_INSTALL.md](./POST_INSTALL.md)** - ⭐ 安装后配置指南 (必须阅读!)
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - 快速参考手册
 - **[INSTALL_CHECKLIST.md](./INSTALL_CHECKLIST.md)** - 安装前检查清单
 

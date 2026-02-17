@@ -5,6 +5,25 @@
 
 ---
 
+## ⚠️ 安装后必须先配置！
+
+**Skill 安装 ≠ 立即可用**
+
+安装完成后，必须运行初始化脚本：
+
+```bash
+cd ~/.openclaw/workspace/skills/fis-architecture
+python3 examples/init_fis31.py
+```
+
+这会创建：
+- 共享中心 `research-uav-gpr/.fis3.1/`
+- 你的 Agent 扩展 `workspace/.fis3.1/`
+
+详见 [POST_INSTALL.md](./POST_INSTALL.md)
+
+---
+
 ## 你获得了什么能力？
 
 安装此 skill 后，你可以：
