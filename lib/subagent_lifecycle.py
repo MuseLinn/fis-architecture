@@ -191,15 +191,100 @@ class SubAgentLifecycleManager:
         return False
     
     def terminate(self, employee_id: str, reason: str = "completed") -> bool:
-        """终止子代理"""
+        """终止子代理并清理工作区"""
         for sa in self.registry["subagents"]:
             if sa["employee_id"] == employee_id:
                 sa["status"] = SubAgentStatus.TERMINATED.value
                 sa["lifecycle"]["completed_at"] = datetime.now().isoformat()
                 sa["termination_reason"] = reason
                 self._save_registry()
+                
+                # 自动清理工作区文件夹
+                self._cleanup_workspace(sa)
                 return True
         return False
+    
+    def _cleanup_workspace(self, card: dict):
+        """清理子代理工作区文件夹"""
+        import shutil
+        workspace_path = Path(card.get("workspace", {}).get("path", ""))
+        
+        if workspace_path.exists() and "subagent" in workspace_path.name:
+            try:
+                shutil.rmtree(workspace_path)
+                print(f"✅ Cleaned up workspace: {workspace_path.name}")
+            except Exception as e:
+                print(f"⚠️ Failed to cleanup {workspace_path}: {e}")
+    
+    def cleanup_all_terminated(self, dry_run: bool = False) -> list:
+        """
+        清理所有已终止的子代理工作区
+        
+        Args:
+            dry_run: 如果 True，只返回将要清理的列表，不实际删除
+        
+        Returns:
+            list: 被清理的 subagent 工号列表
+        """
+        import shutil
+        
+        terminated = [sa for sa in self.registry["subagents"] 
+                      if sa["status"] == SubAgentStatus.TERMINATED.value]
+        
+        cleaned = []
+        for sa in terminated:
+            emp_id = sa["employee_id"]
+            workspace_path = Path(sa.get("workspace", {}).get("path", ""))
+            
+            if workspace_path.exists():
+                if not dry_run:
+                    try:
+                        shutil.rmtree(workspace_path)
+                        cleaned.append(emp_id)
+                        print(f"✅ Cleaned: {emp_id}")
+                    except Exception as e:
+                        print(f"❌ Failed to clean {emp_id}: {e}")
+                else:
+                    cleaned.append(emp_id)
+                    print(f"[DRY-RUN] Would clean: {emp_id}")
+        
+        return cleaned
+    
+    def archive_completed(self, days_old: int = 7) -> list:
+        """
+        归档已完成超过 N 天的子代理
+        
+        Args:
+            days_old: 多少天前的 terminated 子代理需要归档
+        """
+        from datetime import datetime, timedelta
+        import shutil
+        
+        cutoff = datetime.now() - timedelta(days=days_old)
+        archive_dir = Path.home() / ".openclaw" / "archive" / "subagents"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        
+        archived = []
+        for sa in self.registry["subagents"]:
+            if sa["status"] == SubAgentStatus.TERMINATED.value:
+                completed_at = sa.get("lifecycle", {}).get("completed_at")
+                if completed_at:
+                    completed = datetime.fromisoformat(completed_at)
+                    if completed < cutoff:
+                        # 移动到归档
+                        emp_id = sa["employee_id"]
+                        workspace_path = Path(sa.get("workspace", {}).get("path", ""))
+                        
+                        if workspace_path.exists():
+                            dest = archive_dir / workspace_path.name
+                            try:
+                                shutil.move(str(workspace_path), str(dest))
+                                archived.append(emp_id)
+                                print(f"📦 Archived: {emp_id}")
+                            except Exception as e:
+                                print(f"❌ Failed to archive {emp_id}: {e}")
+        
+        return archived
     
     def list_active(self) -> list:
         """列出所有活跃子代理"""
@@ -254,8 +339,11 @@ class SubAgentLifecycleManager:
 """
         return badge
 
-    def generate_badge_image(self, employee_id: str, output_path: Path = None) -> Path:
+    def generate_badge_image(self, employee_id: str, output_path=None):
         """Generate badge image using PIL"""
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent))
         from badge_image_pil import generate_single_badge
         
         card = self.get_card(employee_id)
@@ -264,8 +352,11 @@ class SubAgentLifecycleManager:
         
         return generate_single_badge(card, output_path)
     
-    def generate_multi_badge_image(self, employee_ids: list = None, output_path: Path = None) -> Path:
+    def generate_multi_badge_image(self, employee_ids=None, output_path=None):
         """Generate multi-badge image for multiple subagents"""
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent))
         from badge_image_pil import generate_multi_badge_image
         
         if employee_ids is None:
@@ -279,6 +370,37 @@ class SubAgentLifecycleManager:
             raise ValueError("No subagents to generate badges for")
         
         return generate_multi_badge_image(cards, output_path.name if output_path else None)
+
+
+    def check_expired(self, auto_terminate: bool = True) -> list:
+        """
+        检查并处理超时的 SubAgent
+        
+        Args:
+            auto_terminate: 如果 True，自动终止超时的 SubAgent
+        
+        Returns:
+            list: 超时的 subagent 工号列表
+        """
+        now = datetime.now()
+        expired = []
+        
+        for sa in self.registry["subagents"]:
+            if sa["status"] in [SubAgentStatus.PENDING.value, SubAgentStatus.ACTIVE.value]:
+                deadline_str = sa.get("task", {}).get("deadline")
+                if deadline_str:
+                    try:
+                        deadline = datetime.fromisoformat(deadline_str)
+                        if now > deadline:
+                            emp_id = sa["employee_id"]
+                            expired.append(emp_id)
+                            if auto_terminate:
+                                print(f"⏰ Auto-terminating expired SubAgent: {emp_id}")
+                                self.terminate(emp_id, "timeout_expired")
+                    except ValueError:
+                        pass  # Invalid deadline format
+        
+        return expired
 
 if __name__ == "__main__":
     print("FIS 3.1 SubAgent Lifecycle Manager loaded")
