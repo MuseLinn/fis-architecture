@@ -174,9 +174,9 @@ class SubAgentLifecycleManager:
                 import sys
                 from pathlib import Path
                 sys.path.insert(0, str(Path(__file__).parent))
-                from badge_generator_v6 import BadgeGeneratorV6
+                from badge_generator import BadgeGenerator
                 
-                generator = BadgeGeneratorV6()
+                generator = BadgeGenerator()
                 image_path = generator.create_badge({
                     'name': card['name'],
                     'id': card['employee_id'],
@@ -413,13 +413,13 @@ class SubAgentLifecycleManager:
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_generator_v6 import BadgeGeneratorV6
+        from badge_generator import BadgeGenerator
         
         card = self.get_card(employee_id)
         if not card:
             raise ValueError(f"Employee {employee_id} not found")
         
-        generator = BadgeGeneratorV6()
+        generator = BadgeGenerator()
         return generator.create_badge({
             'name': card['name'],
             'id': card['employee_id'],
@@ -437,7 +437,7 @@ class SubAgentLifecycleManager:
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_generator_v6 import BadgeGeneratorV6
+        from badge_generator import BadgeGenerator
         
         if employee_ids is None:
             cards = self.list_active()
@@ -449,7 +449,7 @@ class SubAgentLifecycleManager:
             raise ValueError("No subagents to generate badges for")
         
         # Generate individual badges
-        generator = BadgeGeneratorV6()
+        generator = BadgeGenerator()
         paths = []
         for card in cards:
             path = generator.create_badge({

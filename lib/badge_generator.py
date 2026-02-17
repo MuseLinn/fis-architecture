@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """
-FIS 3.1 工卡生成器 v6.1 - CryptoPunks风格像素头像
-基于用户参考设计实现，修改：
+FIS 3.1 工卡生成器 - CryptoPunks风格像素头像
+
+基于用户参考设计实现：
 - 删除四角校准标记
 - 条形码统一宽度
-- 角色标签统一宽度
-- CryptoPunks随机头像
+- 角色标签统一宽度 (120px)
+- CryptoPunks随机像素头像
+- 状态指示器位置优化
+
+Author: CyberMao
+Version: 3.1.0
 """
 
 from PIL import Image, ImageDraw, ImageFont
@@ -13,8 +18,8 @@ import random
 import os
 from datetime import datetime, timedelta
 
-class BadgeGeneratorV6:
-    """Pixel-style continuous roll badge generator"""
+class BadgeGenerator:
+    """FIS 3.1 SubAgent Badge Generator - CryptoPunks Pixel Style"""
     
     # Color scheme
     COLORS = {
@@ -402,7 +407,7 @@ class BadgeGeneratorV6:
 
 def generate_sample_badges():
     """Generate sample badges for different roles"""
-    generator = BadgeGeneratorV6()
+    generator = BadgeGenerator()
     
     # Architect badge
     architect_data = {
