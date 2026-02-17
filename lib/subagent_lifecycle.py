@@ -170,7 +170,7 @@ class SubAgentLifecycleManager:
         # Generate image badge
         if badge_format in ["image", "both"]:
             try:
-                # Try v6 generator first (CryptoPunks style)
+                # Use v6 generator (CryptoPunks style)
                 import sys
                 from pathlib import Path
                 sys.path.insert(0, str(Path(__file__).parent))
@@ -195,12 +195,7 @@ class SubAgentLifecycleManager:
                 })
                 result["image"] = image_path
             except Exception as e:
-                # Fallback to older badge_image_pil
-                try:
-                    image_path = self.generate_badge_image(card['employee_id'])
-                    result["image"] = image_path
-                except Exception as e2:
-                    result["image_error"] = f"Failed to generate image badge: {e}, {e2}"
+                result["image_error"] = f"Failed to generate image badge: {e}"
         
         return result
     
@@ -414,27 +409,37 @@ class SubAgentLifecycleManager:
         return badge
 
     def generate_badge_image(self, employee_id: str, output_path=None):
-        """Generate badge image using PIL"""
+        """Generate badge image using v6 (CryptoPunks style)"""
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_image_pil import generate_single_badge
+        from badge_generator_v6 import BadgeGeneratorV6
         
         card = self.get_card(employee_id)
         if not card:
             raise ValueError(f"Employee {employee_id} not found")
         
-        return generate_single_badge(card, output_path)
+        generator = BadgeGeneratorV6()
+        return generator.create_badge({
+            'name': card['name'],
+            'id': card['employee_id'],
+            'role': card['role'].upper(),
+            'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
+            'soul': '"Digital agent"',
+            'responsibilities': [f"Execute {card['role']} tasks"],
+            'output_formats': 'MARKDOWN | JSON | TXT',
+            'barcode_id': card['employee_id'],
+            'status': card['status'].upper(),
+        }, output_path)
     
     def generate_multi_badge_image(self, employee_ids=None, output_path=None):
         """Generate multi-badge image for multiple subagents"""
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_image_pil import generate_multi_badge_image
+        from badge_generator_v6 import BadgeGeneratorV6
         
         if employee_ids is None:
-            # Use all active subagents
             cards = self.list_active()
         else:
             cards = [self.get_card(eid) for eid in employee_ids]
@@ -443,7 +448,24 @@ class SubAgentLifecycleManager:
         if not cards:
             raise ValueError("No subagents to generate badges for")
         
-        return generate_multi_badge_image(cards, output_path.name if output_path else None)
+        # Generate individual badges
+        generator = BadgeGeneratorV6()
+        paths = []
+        for card in cards:
+            path = generator.create_badge({
+                'name': card['name'],
+                'id': card['employee_id'],
+                'role': card['role'].upper(),
+                'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
+                'soul': '"Digital agent"',
+                'responsibilities': [f"Execute {card['role']} tasks"],
+                'output_formats': 'MARKDOWN | JSON | TXT',
+                'barcode_id': card['employee_id'],
+                'status': card['status'].upper(),
+            })
+            paths.append(path)
+        
+        return paths
 
 
     def check_expired(self, auto_terminate: bool = True) -> list:
