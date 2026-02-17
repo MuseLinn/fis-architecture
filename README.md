@@ -89,6 +89,7 @@ manager.terminate(card['employee_id'], "completed")
 ## 📚 文档
 
 - **[SKILL.md](./SKILL.md)** - 完整架构文档
+- **[AGENT_GUIDE.md](./AGENT_GUIDE.md)** - ⭐ Agent 使用指南 (什么时候用 SubAgent)
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - 快速参考手册
 - **[INSTALL_CHECKLIST.md](./INSTALL_CHECKLIST.md)** - 安装前检查清单
 
