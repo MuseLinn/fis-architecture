@@ -405,7 +405,80 @@ class BadgeGenerator:
             draw.rectangle([qr_x + cx * 7, qr_y + cy * 7, qr_x + cx * 7 + 6, qr_y + cy * 7 + 6], fill='#ffffff')
 
 
-def generate_sample_badges():
+def generate_multi_badge_image(badge_data_list, output_path=None, layout='horizontal'):
+    """
+    生成多工牌拼接图片
+    
+    Args:
+        badge_data_list: 多个工牌数据字典的列表
+        output_path: 输出路径
+        layout: 'horizontal'(水平), 'vertical'(垂直), 'grid'(网格)
+    
+    Returns:
+        output_path: 生成的图片路径
+    """
+    from PIL import Image
+    
+    generator = BadgeGenerator()
+    
+    # 生成单个工牌
+    badge_paths = []
+    for data in badge_data_list:
+        path = generator.create_badge(data)
+        badge_paths.append(path)
+    
+    # 加载所有图片
+    images = [Image.open(p) for p in badge_paths]
+    
+    if layout == 'horizontal':
+        # 水平拼接
+        total_width = sum(img.width for img in images)
+        max_height = max(img.height for img in images)
+        
+        combined = Image.new('RGB', (total_width, max_height), '#f5f5f0')
+        x_offset = 0
+        for img in images:
+            combined.paste(img, (x_offset, 0))
+            x_offset += img.width
+            
+    elif layout == 'vertical':
+        # 垂直拼接
+        max_width = max(img.width for img in images)
+        total_height = sum(img.height for img in images)
+        
+        combined = Image.new('RGB', (max_width, total_height), '#f5f5f0')
+        y_offset = 0
+        for img in images:
+            combined.paste(img, (0, y_offset))
+            y_offset += img.height
+            
+    elif layout == 'grid':
+        # 网格布局 (2x2 或 3x2)
+        n = len(images)
+        cols = 2 if n <= 4 else 3
+        rows = (n + cols - 1) // cols
+        
+        max_width = max(img.width for img in images)
+        max_height = max(img.height for img in images)
+        
+        combined = Image.new('RGB', (max_width * cols, max_height * rows), '#f5f5f0')
+        
+        for idx, img in enumerate(images):
+            row = idx // cols
+            col = idx % cols
+            x = col * max_width
+            y = row * max_height
+            combined.paste(img, (x, y))
+    
+    # 保存
+    if output_path is None:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_path = generator.output_dir / f"badges_multi_{layout}_{timestamp}.png"
+    
+    combined.save(output_path)
+    print(f"✅ Multi-badge saved: {output_path}")
+    
+    return str(output_path)
     """Generate sample badges for different roles"""
     generator = BadgeGenerator()
     

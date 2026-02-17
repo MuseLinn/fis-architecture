@@ -201,6 +201,124 @@ class SubAgentLifecycleManager:
         except Exception as e:
             print(f"⚠️ 通知准备失败: {e}")
     
+    def _notify_group_badges_created(self, group_name: str, cards: list, image_path: str):
+        """
+        发送分组工牌创建通知
+        
+        Args:
+            group_name: 分组名称 (如 'worker', 'reviewer')
+            cards: 该组的子代理列表
+            image_path: 拼接后的工牌图片路径
+        """
+        try:
+            role_emoji = {
+                "architect": "🏗️",
+                "worker": "🔧", 
+                "reviewer": "✅",
+                "researcher": "🔬",
+                "formatter": "📝"
+            }.get(group_name.lower(), "🤖")
+            
+            # 构建消息
+            if len(cards) == 1:
+                # 单个子代理
+                card = cards[0]
+                message_text = f"""⚡ 子代理已创建
+
+{role_emoji} 工号: {card['employee_id']}
+📋 角色: {card['role'].upper()}
+📝 任务: {card['task']['description'][:60]}{'...' if len(card['task']['description']) > 60 else ''}
+⏱️ 截止时间: {card['task']['deadline'][:16].replace('T', ' ')}"""
+            else:
+                # 多个子代理
+                agent_list = "\n".join([f"  • {c['employee_id']} - {c['name']}" for c in cards])
+                message_text = f"""⚡ {len(cards)} 个子代理已创建 [{group_name.upper()} 组]
+
+{role_emoji} 角色: {group_name.upper()}
+👥 成员:
+{agent_list}
+
+📝 任务: {cards[0]['task']['description'][:40]}..."""
+            
+            # 保存通知
+            notification = {
+                "timestamp": datetime.now().isoformat(),
+                "group": group_name,
+                "count": len(cards),
+                "agent_ids": [c['employee_id'] for c in cards],
+                "message": message_text,
+                "badge_image": image_path,
+                "status": "pending"
+            }
+            
+            self._save_notification(notification)
+            
+            print(f"📱 分组通知已准备: {group_name} ({len(cards)} 个代理)")
+            print(f"   图片: {image_path}")
+            
+        except Exception as e:
+            print(f"⚠️ 分组通知准备失败: {e}")
+    
+    def spawn_batch(self, agent_configs: list, group_by_role=True) -> dict:
+        """
+        批量创建子代理并生成分组工牌
+        
+        Args:
+            agent_configs: 子代理配置列表，每项为 dict:
+                {
+                    'name': 'Agent-Name',
+                    'role': SubAgentRole.WORKER,
+                    'task_description': 'Task desc',
+                    'timeout_minutes': 60
+                }
+            group_by_role: 是否按角色分组生成工牌图片
+        
+        Returns:
+            dict: {
+                'agents': [card1, card2, ...],
+                'group_images': {role: image_path} (如果 group_by_role=True)
+            }
+        
+        示例:
+            configs = [
+                {'name': 'Worker-1', 'role': SubAgentRole.WORKER, 'task_description': 'Task 1'},
+                {'name': 'Worker-2', 'role': SubAgentRole.WORKER, 'task_description': 'Task 2'},
+                {'name': 'Reviewer-1', 'role': SubAgentRole.REVIEWER, 'task_description': 'Review'},
+            ]
+            result = manager.spawn_batch(configs, group_by_role=True)
+            # 会生成: workers 一张拼接图, reviewer 一张单独图
+        """
+        created_cards = []
+        
+        # 逐个创建子代理
+        for config in agent_configs:
+            card = self.spawn(
+                name=config['name'],
+                role=config['role'],
+                task_description=config.get('task_description', 'No description'),
+                timeout_minutes=config.get('timeout_minutes', 60),
+                badge_format='image'
+            )
+            created_cards.append(card)
+            print(f"✅ Created: {card['employee_id']} - {card['role']}")
+        
+        result = {'agents': created_cards}
+        
+        # 生成分组工牌
+        if group_by_role and created_cards:
+            employee_ids = [c['employee_id'] for c in created_cards]
+            group_images = self.generate_multi_badge_image(
+                employee_ids=employee_ids,
+                group_by_role=True
+            )
+            result['group_images'] = group_images
+            
+            print("\n📸 分组工牌已生成:")
+            for role, path in group_images.items():
+                print(f"   {role}: {path}")
+        
+        return result
+    
     def _save_notification(self, notification: dict):
         """保存通知记录"""
         notify_file = SHARED_HUB / "notifications.json"
@@ -499,12 +617,23 @@ class SubAgentLifecycleManager:
             'status': card['status'].upper(),
         }, output_path)
     
-    def generate_multi_badge_image(self, employee_ids=None, output_path=None):
-        """Generate multi-badge image for multiple subagents"""
+    def generate_multi_badge_image(self, employee_ids=None, output_path=None, layout='horizontal', group_by_role=False):
+        """
+        生成多工牌拼接图片
+        
+        Args:
+            employee_ids: 工号列表，None 表示所有活跃子代理
+            output_path: 输出路径
+            layout: 'horizontal'(水平), 'vertical'(垂直), 'grid'(网格)
+            group_by_role: 是否按角色分组（workers 一起，reviewer 单独）
+        
+        Returns:
+            dict: {group_name: image_path} 或单个路径
+        """
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_generator import BadgeGenerator
+        from badge_generator import generate_multi_badge_image as gen_multi
         
         if employee_ids is None:
             cards = self.list_active()
@@ -515,24 +644,62 @@ class SubAgentLifecycleManager:
         if not cards:
             raise ValueError("No subagents to generate badges for")
         
-        # Generate individual badges
-        generator = BadgeGenerator()
-        paths = []
-        for card in cards:
-            path = generator.create_badge({
-                'name': card['name'],
-                'id': card['employee_id'],
-                'role': card['role'].upper(),
-                'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
-                'soul': '"Digital agent"',
-                'responsibilities': [f"Execute {card['role']} tasks"],
-                'output_formats': 'MARKDOWN | JSON | TXT',
-                'barcode_id': card['employee_id'],
-                'status': card['status'].upper(),
-            })
-            paths.append(path)
-        
-        return paths
+        if group_by_role:
+            # 按角色分组
+            groups = {}
+            for card in cards:
+                role = card['role'].lower()
+                if role not in groups:
+                    groups[role] = []
+                groups[role].append(card)
+            
+            # 为每组生成拼接图片
+            results = {}
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            for role, role_cards in groups.items():
+                badge_data_list = []
+                for card in role_cards:
+                    badge_data_list.append({
+                        'name': card['name'],
+                        'id': card['employee_id'],
+                        'role': card['role'].upper(),
+                        'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
+                        'soul': '"Digital agent"',
+                        'responsibilities': [f"Execute {card['role']} tasks"],
+                        'output_formats': 'MARKDOWN | JSON | TXT',
+                        'barcode_id': card['employee_id'],
+                        'status': card['status'].upper(),
+                    })
+                
+                # 确定布局
+                group_layout = 'horizontal' if len(role_cards) <= 3 else 'grid'
+                
+                output_file = Path.home() / ".openclaw" / "output" / "badges" / f"badges_{role}_{timestamp}.png"
+                path = gen_multi(badge_data_list, str(output_file), group_layout)
+                results[role] = path
+                
+                # 发送分组通知
+                self._notify_group_badges_created(role, role_cards, path)
+            
+            return results
+        else:
+            # 不分组，全部一起
+            badge_data_list = []
+            for card in cards:
+                badge_data_list.append({
+                    'name': card['name'],
+                    'id': card['employee_id'],
+                    'role': card['role'].upper(),
+                    'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
+                    'soul': '"Digital agent"',
+                    'responsibilities': [f"Execute {card['role']} tasks"],
+                    'output_formats': 'MARKDOWN | JSON | TXT',
+                    'barcode_id': card['employee_id'],
+                    'status': card['status'].upper(),
+                })
+            
+            return gen_multi(badge_data_list, output_path, layout)
 
 
     def check_expired(self, auto_terminate: bool = True) -> list:
