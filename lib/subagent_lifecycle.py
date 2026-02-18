@@ -645,11 +645,11 @@ class SubAgentLifecycleManager:
         return badge
 
     def generate_badge_image(self, employee_id: str, output_path=None):
-        """Generate badge image using v6 (CryptoPunks style)"""
+        """Generate badge image using v7 (optimized layout)"""
         import sys
         from pathlib import Path
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_generator import BadgeGenerator
+        from badge_generator_v7 import BadgeGenerator
         
         card = self.get_card(employee_id)
         if not card:
@@ -670,7 +670,7 @@ class SubAgentLifecycleManager:
     
     def generate_multi_badge_image(self, employee_ids=None, output_path=None, layout='horizontal', group_by_role=False):
         """
-        生成多工牌拼接图片
+        生成多工牌拼接图片 (使用 v7 生成器)
         
         Args:
             employee_ids: 工号列表，None 表示所有活跃子代理
@@ -683,8 +683,9 @@ class SubAgentLifecycleManager:
         """
         import sys
         from pathlib import Path
+        from PIL import Image
         sys.path.insert(0, str(Path(__file__).parent))
-        from badge_generator import generate_multi_badge_image as gen_multi
+        from badge_generator_v7 import BadgeGenerator
         
         if employee_ids is None:
             cards = self.list_active()
@@ -694,6 +695,58 @@ class SubAgentLifecycleManager:
         
         if not cards:
             raise ValueError("No subagents to generate badges for")
+        
+        # 使用 v7 生成器
+        generator = BadgeGenerator()
+        
+        def create_badge_data(card):
+            return {
+                'name': card['name'],
+                'id': card['employee_id'],
+                'role': card['role'].upper(),
+                'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
+                'soul': '"Digital agent"',
+                'responsibilities': [f"Execute {card['role']} tasks"],
+                'output_formats': 'MARKDOWN | JSON | TXT',
+                'barcode_id': card['employee_id'],
+                'status': card['status'].upper(),
+            }
+        
+        def combine_badges(badge_paths, layout='horizontal'):
+            """拼接多个工卡图片"""
+            images = [Image.open(p) for p in badge_paths]
+            
+            if layout == 'horizontal':
+                total_width = sum(img.width for img in images)
+                max_height = max(img.height for img in images)
+                combined = Image.new('RGB', (total_width, max_height), '#f5f5f0')
+                x_offset = 0
+                for img in images:
+                    combined.paste(img, (x_offset, 0))
+                    x_offset += img.width
+            elif layout == 'vertical':
+                max_width = max(img.width for img in images)
+                total_height = sum(img.height for img in images)
+                combined = Image.new('RGB', (max_width, total_height), '#f5f5f0')
+                y_offset = 0
+                for img in images:
+                    combined.paste(img, (0, y_offset))
+                    y_offset += img.height
+            elif layout == 'grid':
+                n = len(images)
+                cols = 2 if n <= 4 else 3
+                rows = (n + cols - 1) // cols
+                max_width = max(img.width for img in images)
+                max_height = max(img.height for img in images)
+                combined = Image.new('RGB', (max_width * cols, max_height * rows), '#f5f5f0')
+                for idx, img in enumerate(images):
+                    row = idx // cols
+                    col = idx % cols
+                    x = col * max_width
+                    y = row * max_height
+                    combined.paste(img, (x, y))
+            
+            return combined
         
         if group_by_role:
             # 按角色分组
@@ -709,48 +762,43 @@ class SubAgentLifecycleManager:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             
             for role, role_cards in groups.items():
-                badge_data_list = []
+                # 生成单个工卡
+                badge_paths = []
                 for card in role_cards:
-                    badge_data_list.append({
-                        'name': card['name'],
-                        'id': card['employee_id'],
-                        'role': card['role'].upper(),
-                        'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
-                        'soul': '"Digital agent"',
-                        'responsibilities': [f"Execute {card['role']} tasks"],
-                        'output_formats': 'MARKDOWN | JSON | TXT',
-                        'barcode_id': card['employee_id'],
-                        'status': card['status'].upper(),
-                    })
+                    badge_data = create_badge_data(card)
+                    path = generator.create_badge(badge_data)
+                    badge_paths.append(path)
                 
                 # 确定布局
                 group_layout = 'horizontal' if len(role_cards) <= 3 else 'grid'
                 
-                output_file = Path.home() / ".openclaw" / "output" / "badges" / f"badges_{role}_{timestamp}.png"
-                path = gen_multi(badge_data_list, str(output_file), group_layout)
-                results[role] = path
+                # 拼接
+                combined = combine_badges(badge_paths, group_layout)
+                output_file = generator.output_dir / f"badges_{role}_{timestamp}.png"
+                combined.save(output_file)
+                
+                results[role] = str(output_file)
                 
                 # 发送分组通知
-                self._notify_group_badges_created(role, role_cards, path)
+                self._notify_group_badges_created(role, role_cards, str(output_file))
             
             return results
         else:
             # 不分组，全部一起
-            badge_data_list = []
+            badge_paths = []
             for card in cards:
-                badge_data_list.append({
-                    'name': card['name'],
-                    'id': card['employee_id'],
-                    'role': card['role'].upper(),
-                    'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
-                    'soul': '"Digital agent"',
-                    'responsibilities': [f"Execute {card['role']} tasks"],
-                    'output_formats': 'MARKDOWN | JSON | TXT',
-                    'barcode_id': card['employee_id'],
-                    'status': card['status'].upper(),
-                })
+                badge_data = create_badge_data(card)
+                path = generator.create_badge(badge_data)
+                badge_paths.append(path)
             
-            return gen_multi(badge_data_list, output_path, layout)
+            combined = combine_badges(badge_paths, layout)
+            
+            if output_path is None:
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                output_path = generator.output_dir / f"badges_multi_{layout}_{timestamp}.png"
+            
+            combined.save(output_path)
+            return str(output_path)
 
 
     def check_expired(self, auto_terminate: bool = True) -> list:
