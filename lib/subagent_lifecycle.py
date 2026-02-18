@@ -64,7 +64,7 @@ class SubAgentLifecycleManager:
               task_description: str,
               timeout_minutes: int = 60,
               resources: list = None,
-              badge_format: str = "auto") -> dict:
+              badge_format: str = "both") -> dict:
         """
         创建子代理（发工卡）
         
@@ -74,11 +74,11 @@ class SubAgentLifecycleManager:
             task_description: 任务描述
             timeout_minutes: 超时时间
             resources: 授权资源列表
-            badge_format: 工卡格式 ("text", "image", "both", "auto")
-                         "auto" - 根据环境自动选择 (默认image if available)
+            badge_format: 工卡格式 ("text", "image", "both")
+                         "both" - 同时生成 ASCII 文字和图片 (默认)
         
         Returns:
-            工卡信息 dict
+            工卡信息 dict，包含 badge.text 和 badge.image
         """
         employee_id = self._generate_id()
         
@@ -154,11 +154,15 @@ class SubAgentLifecycleManager:
         """
         准备子代理创建通知
         
-        将工卡临时复制到可访问目录，便于主会话通过 message 工具发送
+        同时准备 ASCII 文字工卡和图片工卡，支持 Channel 自适应发送
         
         Returns:
-            dict: 通知信息，包含 message 和 sendable_badge_path
-                  主会话应使用这些信息调用 message 工具发送
+            dict: 通知信息，包含：
+                - ascii_badge: ASCII 文字工卡（所有 Channel 都支持）
+                - message: 文字消息
+                - badge_image: 原始图片路径（工作区内）
+                - sendable_badge_path: 可发送的图片路径（workspace/temp_badges/）
+                主会话应根据 Channel 能力选择发送方式
         """
         try:
             # 构建通知消息
@@ -170,6 +174,10 @@ class SubAgentLifecycleManager:
                 "formatter": "📝"
             }.get(card['role'].lower(), "🤖")
             
+            # ASCII 工卡（所有 Channel 都支持）
+            ascii_badge = card.get('badge', {}).get('text', '')
+            
+            # 文字消息
             message_text = f"""🎫 新子代理工卡已发放
 
 {role_emoji} 工号: {card['employee_id']}
@@ -182,7 +190,7 @@ class SubAgentLifecycleManager:
             badge_image = card.get('badge', {}).get('image')
             sendable_badge_path = None
             
-            # 将工卡复制到可访问目录（如果需要发送）
+            # 将工卡复制到可访问目录（如果需要发送图片）
             if badge_image and os.path.exists(badge_image):
                 try:
                     import shutil
@@ -228,7 +236,8 @@ class SubAgentLifecycleManager:
             notification = {
                 "timestamp": datetime.now().isoformat(),
                 "employee_id": card['employee_id'],
-                "message": message_text,
+                "ascii_badge": ascii_badge,  # ASCII 工卡（文字形式）
+                "message": message_text,  # 文字消息
                 "badge_image": badge_image,  # 原始路径（在工作区内，会随 terminate 清理）
                 "sendable_badge_path": sendable_badge_path,  # 可发送的临时路径
                 "status": "ready_to_send"
@@ -238,6 +247,8 @@ class SubAgentLifecycleManager:
             self._save_notification(notification)
             
             print(f"✅ 工卡已生成: {card['employee_id']}")
+            print(f"   ASCII 工卡: {'✓' if ascii_badge else '✗'}")
+            print(f"   图片工卡: {'✓' if badge_image else '✗'}")
             
             return notification
             
@@ -388,14 +399,10 @@ class SubAgentLifecycleManager:
         
         # Determine format
         if badge_format == "auto":
-            # Check if PIL is available for image generation
-            try:
-                from PIL import Image
-                badge_format = "image"  # Default to image if PIL available
-            except ImportError:
-                badge_format = "text"
+            # Default to both for maximum compatibility
+            badge_format = "both"
         
-        # Generate text badge
+        # Generate text badge (ASCII)
         if badge_format in ["text", "both"]:
             result["text"] = self.generate_badge(card['employee_id'])
         
