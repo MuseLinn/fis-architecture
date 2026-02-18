@@ -1,6 +1,6 @@
 {
   "name": "fis-architecture",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "description": "Federal Intelligence System (FIS) - Multi-agent collaboration framework with shared memory, deadlock detection, skill registry, and subagent lifecycle management for OpenClaw",
   "author": "CyberMao",
   "tags": ["fis", "multi-agent", "architecture", "collaboration", "memory", "deadlock", "skills"],
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/openclaw/fis-architecture"
+    "url": "https://github.com/MuseLinn/fis-architecture"
   },
   "license": "MIT"
 }

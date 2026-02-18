@@ -1,6 +1,6 @@
 # FIS Architecture Skill
 
-> **Version**: 3.1.2  
+> **Version**: 3.1.3  
 > **Name**: Federal Intelligence System (联邦智能系统 / FIS 联邦智能系统)  
 > **Description**: OpenClaw multi-agent collaboration framework with shared memory, deadlock detection, and skill registry  
 > **Status**: P0 core stable, Phase 2/3 framework ready (user data isolated)
