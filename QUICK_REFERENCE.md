@@ -154,4 +154,60 @@ ls ~/.openclaw/workspace-subagent_*
 
 ---
 
+## Task Router (任务路由) - 自动判断使用 SubAgent
+
+### Quick Check (快速判断)
+```python
+from task_router import should_use_subagent, classify_task
+
+# 判断是否应使用 SubAgent
+if should_use_subagent("帮我整理 downloads 文件夹"):
+    # 创建 SubAgent
+    card = manager.spawn(...)
+else:
+    # 主会话直接处理
+    pass
+```
+
+### Detailed Classification (详细分类)
+```python
+from task_router import classify_task
+
+result = classify_task("统计 workspace 下的代码行数")
+print(result)
+# {
+#     "use_subagent": True,
+#     "reason": "检测到长任务关键词: '统计'",
+#     "estimated_time": "medium",
+#     "recommended_role": "researcher"
+# }
+```
+
+### Pattern Matching (模式匹配)
+```python
+from task_router import match_task_pattern
+
+pattern = match_task_pattern("帮我检查代码")
+print(pattern["use_subagent"])  # True/False
+print(pattern["role"])          # 推荐角色
+print(pattern["timeout"])       # 建议超时时间
+```
+
+### Auto-Routing Rule (自动路由规则)
+
+**使用 SubAgent 的场景:**
+- 文件整理、清理、批量处理
+- 代码统计、分析、检查
+- Git 操作（提交、同步）
+- 调研、研究类任务
+- 描述 >20 词的多步骤任务
+
+**主会话直接处理:**
+- 快速问答（是什么、为什么、怎么）
+- 解释说明类
+- 简单对比、推荐
+- 是/否 确认
+
+---
+
 *FIS 3.1 Lite — Quality over Quantity (质胜于量) 🐱⚡*

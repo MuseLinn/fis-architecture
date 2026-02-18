@@ -145,14 +145,18 @@ class SubAgentLifecycleManager:
         subagent_card["badge"] = badge_result
         
         # 发送即时通知 (如果启用)
-        self._notify_badge_created(subagent_card)
+        notification = self._notify_badge_created(subagent_card)
+        subagent_card["notification"] = notification
         
         return subagent_card
     
-    def _notify_badge_created(self, card: dict):
+    def _notify_badge_created(self, card: dict) -> dict:
         """
-        发送子代理创建通知到 WhatsApp
-        需要配置 WhatsApp channel 才能正常工作
+        准备子代理创建通知
+        
+        Returns:
+            dict: 通知信息，包含 message 和 badge_image_path
+                  主会话应使用这些信息调用 message 工具发送
         """
         try:
             # 构建通知消息
@@ -164,39 +168,35 @@ class SubAgentLifecycleManager:
                 "formatter": "📝"
             }.get(card['role'].lower(), "🤖")
             
-            message_text = f"""⚡ 新子代理已创建
+            message_text = f"""🎫 新子代理工卡已发放
 
 {role_emoji} 工号: {card['employee_id']}
 📋 角色: {card['role'].upper()}
 📝 任务: {card['task']['description'][:60]}{'...' if len(card['task']['description']) > 60 else ''}
 ⏱️ 截止时间: {card['task']['deadline'][:16].replace('T', ' ')}
 
-工卡图片已生成"""
+任务执行中，完成后将自动汇报结果。"""
             
-            # 尝试发送 WhatsApp 消息
-            # 注意: 需要用户预先配置 WhatsApp channel
             badge_image = card.get('badge', {}).get('image')
             
-            if badge_image and os.path.exists(badge_image):
-                # 使用 message 工具发送
-                import base64
-                with open(badge_image, 'rb') as f:
-                    img_data = base64.b64encode(f.read()).decode()
-                
-                # 记录到通知队列 (实际发送需要 message 工具)
-                notification = {
-                    "timestamp": datetime.now().isoformat(),
-                    "employee_id": card['employee_id'],
-                    "message": message_text,
-                    "badge_image": badge_image,
-                    "status": "pending"  # 等待发送
-                }
-                
-                # 保存到通知记录
-                self._save_notification(notification)
-                
-                print(f"📱 通知已准备: {card['employee_id']} - {card['role']}")
-                print(f"   消息预览: {message_text[:50]}...")
+            notification = {
+                "timestamp": datetime.now().isoformat(),
+                "employee_id": card['employee_id'],
+                "message": message_text,
+                "badge_image": badge_image,
+                "status": "ready_to_send"
+            }
+            
+            # 保存到通知记录
+            self._save_notification(notification)
+            
+            print(f"✅ 工卡已生成: {card['employee_id']}")
+            
+            return notification
+            
+        except Exception as e:
+            print(f"⚠️ 通知准备失败: {e}")
+            return {"status": "error", "error": str(e)}
                 
         except Exception as e:
             print(f"⚠️ 通知准备失败: {e}")
