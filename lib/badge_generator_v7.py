@@ -19,15 +19,22 @@ from PIL import Image, ImageDraw, ImageFont
 import random
 import os
 import subprocess
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
+# qrcode module optional - fallback to placeholder if not available
+try:
+    import qrcode
+    HAS_QRCODE = True
+except ImportError:
+    HAS_QRCODE = False
 
 class BadgeGenerator:
     """FIS 3.1 SubAgent Badge Generator - Optimized Layout"""
     
     # 优化后的尺寸
     WIDTH = 900          # 缩减宽度 (原1200)
-    HEIGHT = 520         # 增加高度 (原400)
+    HEIGHT = 520         # 原始高度
     
     # 配色方案
     COLORS = {
@@ -167,15 +174,15 @@ class BadgeGenerator:
             if chinese_font:
                 # 为 ttc 文件传递 index 参数
                 font_kwargs = {'index': chinese_font_index} if chinese_font_index is not None else {}
-                fonts['title'] = ImageFont.truetype(chinese_font, 22, **font_kwargs)
-                fonts['header'] = ImageFont.truetype(chinese_font, 16, **font_kwargs)
-                fonts['text'] = ImageFont.truetype(chinese_font, 14, **font_kwargs)
-                fonts['small'] = ImageFont.truetype(chinese_font, 12, **font_kwargs)
+                fonts['title'] = ImageFont.truetype(chinese_font, 20, **font_kwargs)
+                fonts['header'] = ImageFont.truetype(chinese_font, 15, **font_kwargs)
+                fonts['text'] = ImageFont.truetype(chinese_font, 13, **font_kwargs)
+                fonts['small'] = ImageFont.truetype(chinese_font, 11, **font_kwargs)
             else:
-                fonts['title'] = ImageFont.truetype(mono_font, 22) if mono_font else default_font
-                fonts['header'] = ImageFont.truetype(mono_font, 16) if mono_font else default_font
-                fonts['text'] = ImageFont.truetype(mono_font, 14) if mono_font else default_font
-                fonts['small'] = ImageFont.truetype(mono_font, 12) if mono_font else default_font
+                fonts['title'] = ImageFont.truetype(mono_font, 20) if mono_font else default_font
+                fonts['header'] = ImageFont.truetype(mono_font, 15) if mono_font else default_font
+                fonts['text'] = ImageFont.truetype(mono_font, 13) if mono_font else default_font
+                fonts['small'] = ImageFont.truetype(mono_font, 11) if mono_font else default_font
             
             fonts['pixel'] = ImageFont.truetype(mono_font, 9) if mono_font else default_font
         except Exception as e:
@@ -205,11 +212,11 @@ class BadgeGenerator:
         # 添加右侧区域（职责 + 详细任务要求）
         self._add_right_section(draw, agent_data)
         
-        # 添加右侧倾斜像素装饰
+        # 添加右侧垂直状态条装饰
         self._add_tilted_pixel_badge(draw, agent_data)
         
-        # 添加底部
-        self._add_footer(draw, agent_data)
+        # 添加底部（并粘贴QR码）
+        self._add_footer(draw, agent_data, card)
         
         # 保存
         if output_path is None:
@@ -257,12 +264,12 @@ class BadgeGenerator:
         left_x = 40
         avatar_y = 90
         
-        # 头像框架（橙色圆圈）
-        draw.ellipse([left_x, avatar_y, left_x + 70, avatar_y + 70],
-                    outline=self.COLORS['primary'], width=4)
+        # 头像框架（橙色方框）
+        draw.rectangle([left_x - 2, avatar_y - 2, left_x + 72, avatar_y + 72],
+                      outline=self.COLORS['primary'], width=4)
         
-        # CryptoPunks 风格随机像素头像
-        self._draw_cryptopunk_avatar(draw, left_x, avatar_y)
+        # 随机小动物像素头像（每次生成随机，不绑定工号）
+        self._draw_animal_avatar(draw, left_x, avatar_y)
         
         # 角色标签（固定宽度）
         role = agent_data.get('role', 'AGENT').upper()
@@ -284,68 +291,290 @@ class BadgeGenerator:
         
         agent_id = agent_data.get('id', 'UNKNOWN')
         draw.text((left_x, badge_y + 72), f"ID: {agent_id}", fill=self.COLORS['secondary'], font=self.fonts['small'])
+        
+        # FIS INFO 信息框（移到左侧下方）
+        info_y = badge_y + 100
+        info_width = 140
+        info_height = 145  # 增加高度以容纳字体
+        
+        # 信息框背景
+        draw.rectangle([left_x, info_y, left_x + info_width, info_y + info_height],
+                      fill='#f8f8f5', outline=self.COLORS['divider'], width=1)
+        
+        # 信息框标题
+        draw.rectangle([left_x, info_y, left_x + info_width, info_y + 22],
+                      fill=self.COLORS['border'])
+        draw.text((left_x + 6, info_y + 5), "FIS INFO", fill='#ffffff', font=self.fonts['pixel'])
+        
+        # 信息内容 - 增加行间距
+        draw.text((left_x + 6, info_y + 30), "Version:", fill=self.COLORS['secondary'], font=self.fonts['small'])
+        draw.text((left_x + 6, info_y + 48), "3.1 Lite", fill=self.COLORS['border'], font=self.fonts['text'])
+        
+        draw.text((left_x + 6, info_y + 72), "Security:", fill=self.COLORS['secondary'], font=self.fonts['small'])
+        draw.text((left_x + 6, info_y + 90), "Level 1", fill='#00c853', font=self.fonts['text'])
+        
+        draw.text((left_x + 6, info_y + 114), "Workspace:", fill=self.COLORS['secondary'], font=self.fonts['small'])
+        ws_text = agent_data.get('id', 'N/A')[:10]
+        draw.text((left_x + 6, info_y + 132), ws_text, fill=self.COLORS['border'], font=self.fonts['small'])
     
-    def _draw_cryptopunk_avatar(self, draw, left_x, avatar_y):
-        """绘制 CryptoPunks 风格随机像素头像"""
-        colors = {
-            'skin': ['#f5d0b0', '#e8c4a0', '#d4a574', '#8d5524', '#523418', '#f8e8d8'],
-            'hair': ['#ff6b00', '#4a4a4a', '#8b4513', '#ffd700', '#ff0000', '#000000'],
-            'eyes': ['#000000', '#4169e1', '#228b22', '#8b4513', '#9370db'],
-            'accessory': ['#ff6b00', '#ffd700', '#c0c0c0', '#4169e1'],
-            'bg': ['#1a1a1a', '#ff4d00', '#4169e1', '#228b22'],
+    def _draw_animal_avatar(self, draw, left_x, avatar_y):
+        """绘制随机小动物像素头像（完全随机，每次不同）"""
+        # 完全随机，不绑定工号
+        random.seed()
+        
+        # 随机选择动物类型
+        animals = ['cat', 'dog', 'rabbit', 'bear', 'fox', 'panda', 'owl']
+        animal = random.choice(animals)
+        
+        # 颜色配置
+        fur_colors = {
+            'cat': ['#ff8c42', '#4a4a4a', '#ffffff', '#d4a574', '#1a1a1a', '#ff6b6b', '#ffd700'],
+            'dog': ['#d4a574', '#8b4513', '#f5d0b0', '#4a4a4a', '#ffffff', '#e8c4a0'],
+            'rabbit': ['#ffffff', '#f5d0b0', '#d4a574', '#ff9999', '#ffb6c1'],
+            'bear': ['#8b4513', '#d4a574', '#4a4a4a', '#ffffff', '#a0522d'],
+            'fox': ['#ff8c42', '#ff6b00', '#4a4a4a', '#ffffff', '#ffa500'],
+            'panda': ['#ffffff'],
+            'owl': ['#8b4513', '#4a4a4a', '#d4a574', '#ff8c42', '#654321'],
         }
         
-        random.seed(left_x + avatar_y)
+        bg_colors = ['#e8f4f8', '#fff3e0', '#f3e5f5', '#e8f5e9', '#ffebee', '#e0f7fa', '#fff8e1', '#fce4ec']
         
+        # 增加像素密度，让头像更精细
         center_x = left_x + 35
         center_y = avatar_y + 35
-        pixel_size = 7
+        pixel_size = 4  # 从6减小到4，增加像素密度
         
-        # 背景
-        bg_color = random.choice(colors['bg'])
-        for y in range(avatar_y + 6, avatar_y + 64, pixel_size):
-            for x in range(left_x + 6, left_x + 64, pixel_size):
-                dist = ((x + pixel_size//2 - center_x) ** 2 + 
-                       (y + pixel_size//2 - center_y) ** 2) ** 0.5
-                if dist < 28:
-                    draw.rectangle([x, y, x + pixel_size, y + pixel_size], fill=bg_color)
+        fur_color = random.choice(fur_colors[animal])
+        bg_color = random.choice(bg_colors)
         
-        # 脸部
-        skin_color = random.choice(colors['skin'])
-        face_x = center_x - 21
-        face_y = center_y - 14
-        for y in range(face_y, face_y + 42, pixel_size):
-            for x in range(face_x, face_x + 42, pixel_size):
-                dist = ((x + pixel_size//2 - center_x) ** 2 + 
-                       (y + pixel_size//2 - center_y) ** 2) ** 0.5
-                if dist < 24:
-                    draw.rectangle([x, y, x + pixel_size, y + pixel_size], fill=skin_color)
+        # 绘制方形背景
+        for y in range(avatar_y + 2, avatar_y + 68, pixel_size):
+            for x in range(left_x + 2, left_x + 68, pixel_size):
+                draw.rectangle([x, y, x + pixel_size, y + pixel_size], fill=bg_color)
         
-        # 眼睛
-        eye_color = random.choice(colors['eyes'])
-        draw.rectangle([face_x + 7, face_y + 14, face_x + 14, face_y + 21], fill=eye_color)
-        draw.rectangle([face_x + 28, face_y + 14, face_x + 35, face_y + 21], fill=eye_color)
-        
-        # 嘴巴
-        draw.rectangle([face_x + 14, face_y + 32, face_x + 28, face_y + 36], fill='#000000')
+        # 根据动物类型绘制
+        if animal == 'cat':
+            self._draw_cat(draw, center_x, center_y, pixel_size, fur_color)
+        elif animal == 'dog':
+            self._draw_dog(draw, center_x, center_y, pixel_size, fur_color)
+        elif animal == 'rabbit':
+            self._draw_rabbit(draw, center_x, center_y, pixel_size, fur_color)
+        elif animal == 'bear':
+            self._draw_bear(draw, center_x, center_y, pixel_size, fur_color)
+        elif animal == 'fox':
+            self._draw_fox(draw, center_x, center_y, pixel_size, fur_color)
+        elif animal == 'panda':
+            self._draw_panda(draw, center_x, center_y, pixel_size, fur_color)
+        elif animal == 'owl':
+            self._draw_owl(draw, center_x, center_y, pixel_size, fur_color)
         
         random.seed()
     
+    def _draw_cat(self, draw, cx, cy, ps, color):
+        """绘制像素猫（高密度）"""
+        # 耳朵（三角形）
+        draw.rectangle([cx - 16, cy - 24, cx - 4, cy - 8], fill=color)
+        draw.rectangle([cx + 4, cy - 24, cx + 16, cy - 8], fill=color)
+        draw.rectangle([cx - 12, cy - 20, cx - 6, cy - 12], fill='#ffb6c1')  # 内耳
+        draw.rectangle([cx + 6, cy - 20, cx + 12, cy - 12], fill='#ffb6c1')
+        
+        # 脸（更圆润）
+        for y in range(cy - 14, cy + 16, ps):
+            for x in range(cx - 20, cx + 20, ps):
+                if abs(x - cx) < 18 and abs(y - cy) < 14:
+                    draw.rectangle([x, y, x + ps, y + ps], fill=color)
+        
+        # 大眼睛（可爱风格）
+        eye_color = random.choice(['#228b22', '#4169e1', '#ffd700', '#9370db'])
+        draw.rectangle([cx - 14, cy - 6, cx - 4, cy + 6], fill=eye_color)
+        draw.rectangle([cx + 4, cy - 6, cx + 14, cy + 6], fill=eye_color)
+        draw.rectangle([cx - 12, cy - 4, cx - 6, cy + 2], fill='#000000')  # 瞳孔
+        draw.rectangle([cx + 6, cy - 4, cx + 12, cy + 2], fill='#000000')
+        draw.rectangle([cx - 10, cy - 2, cx - 8, cy], fill='#ffffff')  # 高光
+        draw.rectangle([cx + 8, cy - 2, cx + 10, cy], fill='#ffffff')
+        
+        # 小鼻子
+        draw.rectangle([cx - 3, cy + 6, cx + 3, cy + 10], fill='#ffb6c1')
+        
+        # 小嘴巴
+        draw.rectangle([cx - 6, cy + 10, cx, cy + 12], fill='#333333')
+        draw.rectangle([cx, cy + 10, cx + 6, cy + 12], fill='#333333')
+    
+    def _draw_dog(self, draw, cx, cy, ps, color):
+        """绘制像素狗（高密度）"""
+        # 耷拉耳朵（更大更可爱）
+        draw.rectangle([cx - 22, cy - 14, cx - 6, cy + 10], fill=color)
+        draw.rectangle([cx + 6, cy - 14, cx + 22, cy + 10], fill=color)
+        draw.rectangle([cx - 18, cy - 8, cx - 10, cy + 4], fill='#d4a574')  # 内耳阴影
+        draw.rectangle([cx + 10, cy - 8, cx + 18, cy + 4], fill='#d4a574')
+        
+        # 脸（更圆润）
+        for y in range(cy - 12, cy + 18, ps):
+            for x in range(cx - 18, cx + 18, ps):
+                if abs(x - cx) < 16 and abs(y - cy) < 12:
+                    draw.rectangle([x, y, x + ps, y + ps], fill=color)
+        
+        # 大眼睛（可爱风格）
+        draw.rectangle([cx - 12, cy - 4, cx - 4, cy + 6], fill='#000000')
+        draw.rectangle([cx + 4, cy - 4, cx + 12, cy + 6], fill='#000000')
+        draw.rectangle([cx - 10, cy - 2, cx - 6, cy + 2], fill='#ffffff')  # 高光
+        draw.rectangle([cx + 6, cy - 2, cx + 10, cy + 2], fill='#ffffff')
+        
+        # 大鼻子
+        draw.rectangle([cx - 5, cy + 6, cx + 5, cy + 12], fill='#333333')
+        
+        # 吐舌头（随机）
+        if random.random() > 0.5:
+            draw.rectangle([cx - 4, cy + 12, cx + 4, cy + 20], fill='#ff6b6b')
+            draw.rectangle([cx - 2, cy + 16, cx + 2, cy + 22], fill='#ff4757')
+    
+    def _draw_rabbit(self, draw, cx, cy, ps, color):
+        """绘制像素兔子（高密度）"""
+        # 长耳朵（更可爱）
+        draw.rectangle([cx - 16, cy - 36, cx - 4, cy - 10], fill=color)
+        draw.rectangle([cx + 4, cy - 36, cx + 16, cy - 10], fill=color)
+        draw.rectangle([cx - 12, cy - 32, cx - 6, cy - 16], fill='#ffb6c1')  # 内耳
+        draw.rectangle([cx + 6, cy - 32, cx + 12, cy - 16], fill='#ffb6c1')
+        
+        # 圆脸（更圆润）
+        for y in range(cy - 12, cy + 16, ps):
+            for x in range(cx - 16, cx + 16, ps):
+                if abs(x - cx) < 14 and abs(y - cy) < 12:
+                    draw.rectangle([x, y, x + ps, y + ps], fill=color)
+        
+        # 超大眼睛（可爱风格）
+        draw.rectangle([cx - 12, cy - 4, cx - 2, cy + 8], fill='#000000')
+        draw.rectangle([cx + 2, cy - 4, cx + 12, cy + 8], fill='#000000')
+        draw.rectangle([cx - 10, cy - 2, cx - 4, cy + 4], fill='#ffffff')  # 高光
+        draw.rectangle([cx + 4, cy - 2, cx + 10, cy + 4], fill='#ffffff')
+        
+        # 小鼻子
+        draw.rectangle([cx - 3, cy + 8, cx + 3, cy + 12], fill='#ffb6c1')
+        
+        # 大门牙（更明显）
+        draw.rectangle([cx - 4, cy + 12, cx, cy + 18], fill='#ffffff')
+        draw.rectangle([cx, cy + 12, cx + 4, cy + 18], fill='#ffffff')
+        draw.rectangle([cx - 4, cy + 18, cx + 4, cy + 20], fill='#e0e0e0')  # 牙齿分隔线
+    
+    def _draw_bear(self, draw, cx, cy, ps, color):
+        """绘制像素熊（高密度）"""
+        # 圆耳朵（更大）
+        draw.rectangle([cx - 18, cy - 16, cx - 6, cy - 6], fill=color)
+        draw.rectangle([cx + 6, cy - 16, cx + 18, cy - 6], fill=color)
+        draw.rectangle([cx - 14, cy - 14, cx - 8, cy - 8], fill='#d4a574')  # 内耳
+        draw.rectangle([cx + 8, cy - 14, cx + 14, cy - 8], fill='#d4a574')
+        
+        # 大圆脸（更圆润）
+        for y in range(cy - 12, cy + 20, ps):
+            for x in range(cx - 20, cx + 20, ps):
+                if abs(x - cx) < 18 and abs(y - cy) < 14:
+                    draw.rectangle([x, y, x + ps, y + ps], fill=color)
+        
+        # 小眼睛（豆豆眼更可爱）
+        draw.rectangle([cx - 10, cy - 4, cx - 4, cy + 2], fill='#000000')
+        draw.rectangle([cx + 4, cy - 4, cx + 10, cy + 2], fill='#000000')
+        
+        # 大鼻子
+        draw.rectangle([cx - 6, cy + 4, cx + 6, cy + 12], fill='#333333')
+        draw.rectangle([cx - 2, cy + 12, cx + 2, cy + 16], fill='#333333')
+        
+        # 小嘴巴
+        draw.rectangle([cx - 8, cy + 14, cx - 2, cy + 16], fill='#333333')
+        draw.rectangle([cx + 2, cy + 14, cx + 8, cy + 16], fill='#333333')
+    
+    def _draw_fox(self, draw, cx, cy, ps, color):
+        """绘制像素狐狸（高密度）"""
+        # 尖耳朵（更大）
+        draw.rectangle([cx - 18, cy - 24, cx - 6, cy - 8], fill=color)
+        draw.rectangle([cx + 6, cy - 24, cx + 18, cy - 8], fill=color)
+        draw.rectangle([cx - 16, cy - 22, cx - 10, cy - 14], fill='#ffffff')  # 白耳尖
+        draw.rectangle([cx + 10, cy - 22, cx + 16, cy - 14], fill='#ffffff')
+        draw.rectangle([cx - 14, cy - 18, cx - 10, cy - 12], fill='#333333')  # 黑耳尖
+        draw.rectangle([cx + 10, cy - 18, cx + 14, cy - 12], fill='#333333')
+        
+        # 尖脸（更精细）
+        for y in range(cy - 10, cy + 14, ps):
+            for x in range(cx - 16, cx + 16, ps):
+                width = 14 - (y - cy + 10) // 3
+                if abs(x - cx) < width:
+                    draw.rectangle([x, y, x + ps, y + ps], fill=color)
+        
+        # 眼睛（更大）
+        draw.rectangle([cx - 12, cy - 4, cx - 4, cy + 6], fill='#000000')
+        draw.rectangle([cx + 4, cy - 4, cx + 12, cy + 6], fill='#000000')
+        
+        # 尖鼻子
+        draw.rectangle([cx - 3, cy + 8, cx + 3, cy + 14], fill='#333333')
+    
+    def _draw_panda(self, draw, cx, cy, ps, _):
+        """绘制像素熊猫（高密度）"""
+        # 黑眼圈（耳朵）
+        draw.rectangle([cx - 20, cy - 16, cx - 6, cy - 4], fill='#000000')
+        draw.rectangle([cx + 6, cy - 16, cx + 20, cy - 4], fill='#000000')
+        
+        # 白脸（更圆润）
+        for y in range(cy - 12, cy + 16, ps):
+            for x in range(cx - 18, cx + 18, ps):
+                if abs(x - cx) < 16 and abs(y - cy) < 12:
+                    draw.rectangle([x, y, x + ps, y + ps], fill='#ffffff')
+        
+        # 黑眼圈（眼睛周围，更大）
+        draw.rectangle([cx - 14, cy - 8, cx - 2, cy + 6], fill='#000000')
+        draw.rectangle([cx + 2, cy - 8, cx + 14, cy + 6], fill='#000000')
+        
+        # 眼睛（更大）
+        draw.rectangle([cx - 10, cy - 4, cx - 4, cy + 4], fill='#ffffff')
+        draw.rectangle([cx + 4, cy - 4, cx + 10, cy + 4], fill='#ffffff')
+        draw.rectangle([cx - 8, cy - 2, cx - 6, cy + 2], fill='#000000')  # 瞳孔
+        draw.rectangle([cx + 6, cy - 2, cx + 8, cy + 2], fill='#000000')
+        
+        # 黑鼻子
+        draw.rectangle([cx - 4, cy + 6, cx + 4, cy + 12], fill='#000000')
+        
+        # 小嘴巴
+        draw.rectangle([cx - 2, cy + 12, cx + 2, cy + 16], fill='#000000')
+    
+    def _draw_owl(self, draw, cx, cy, ps, color):
+        """绘制像素猫头鹰（高密度）"""
+        # 耳朵羽毛（更大）
+        draw.rectangle([cx - 16, cy - 22, cx - 6, cy - 12], fill=color)
+        draw.rectangle([cx + 6, cy - 22, cx + 16, cy - 12], fill=color)
+        
+        # 圆脸（更圆润）
+        for y in range(cy - 14, cy + 16, ps):
+            for x in range(cx - 18, cx + 18, ps):
+                if abs(x - cx) < 16 and abs(y - cy) < 13:
+                    draw.rectangle([x, y, x + ps, y + ps], fill=color)
+        
+        # 超大眼睛（眼圈）
+        draw.rectangle([cx - 14, cy - 8, cx, cy + 8], fill='#ffffff')
+        draw.rectangle([cx, cy - 8, cx + 14, cy + 8], fill='#ffffff')
+        
+        # 瞳孔（更大）
+        eye_color = random.choice(['#ffd700', '#ffa500', '#ff6b00'])
+        draw.rectangle([cx - 10, cy - 4, cx - 2, cy + 6], fill=eye_color)
+        draw.rectangle([cx + 2, cy - 4, cx + 10, cy + 6], fill=eye_color)
+        draw.rectangle([cx - 8, cy - 2, cx - 4, cy + 4], fill='#000000')
+        draw.rectangle([cx + 4, cy - 2, cx + 8, cy + 4], fill='#000000')
+        
+        # 喙（更大）
+        draw.rectangle([cx - 3, cy + 6, cx + 3, cy + 14], fill='#ff8c42')
+    
     def _add_right_section(self, draw, agent_data):
         """添加右侧区域 - 包含详细任务要求"""
-        right_x = 220
+        right_x = 240  # 向右移动，增加右侧区域宽度
         section_y = 90
         
         # SOUL 标签（橙色）
         soul = agent_data.get('soul', '"Digital familiar navigating the void"')
-        draw.rectangle([right_x, section_y, right_x + 70, section_y + 22],
+        draw.rectangle([right_x, section_y, right_x + 70, section_y + 24],
                       fill=self.COLORS['primary'], outline=self.COLORS['border'], width=2)
         draw.text((right_x + 8, section_y + 5), "SOUL", fill='#ffffff', font=self.fonts['pixel'])
-        draw.text((right_x + 80, section_y + 3), soul[:40], fill=self.COLORS['primary'], font=self.fonts['text'])
+        draw.text((right_x + 82, section_y + 3), soul[:45], fill=self.COLORS['primary'], font=self.fonts['text'])
         
         # RESPONSIBILITIES 标签（黑色）
-        resp_y = section_y + 40
-        draw.rectangle([right_x, resp_y, right_x + 140, resp_y + 22],
+        resp_y = section_y + 42
+        draw.rectangle([right_x, resp_y, right_x + 140, resp_y + 24],
                       fill=self.COLORS['border'], outline=self.COLORS['border'], width=2)
         draw.text((right_x + 8, resp_y + 5), "RESPONSIBILITIES", fill='#ffffff', font=self.fonts['pixel'])
         
@@ -357,13 +586,13 @@ class BadgeGenerator:
         ])
         
         for i, bullet in enumerate(responsibilities[:3]):
-            y = resp_y + 28 + (i * 18)
-            text = bullet[:55]  # 截断长文本
+            y = resp_y + 30 + (i * 20)
+            text = bullet[:58]  # 增加可显示字符数
             draw.text((right_x + 8, y), f"▸ {text}", fill=self.COLORS['border'], font=self.fonts['small'])
         
-        # 输出要求 - 第一行：格式标签
-        out_y = resp_y + 95
-        draw.rectangle([right_x, out_y, right_x + 100, out_y + 22],
+        # 输出要求 - 格式标签
+        out_y = resp_y + 100
+        draw.rectangle([right_x, out_y, right_x + 100, out_y + 24],
                       fill='#666666', outline=self.COLORS['border'], width=2)
         draw.text((right_x + 8, out_y + 5), "OUTPUT REQ", fill='#ffffff', font=self.fonts['pixel'])
         
@@ -371,31 +600,78 @@ class BadgeGenerator:
         draw.text((right_x + 108, out_y + 5), output_formats, 
                  fill=self.COLORS['border'], font=self.fonts['small'])
         
-        # 输出要求 - 第二行：具体任务要求（新增）
-        task_req_y = out_y + 28
+        # 输出要求 - 具体任务要求
+        task_req_y = out_y + 32
         task_requirements = agent_data.get('task_requirements', [
             "1. Analyze code structure and dependencies",
             "2. Provide detailed line count statistics",
             "3. Report top 5 largest files",
         ])
         
-        draw.text((right_x, task_req_y), "任务输出要求:", 
+        draw.text((right_x, task_req_y), "任务要求:", 
                  fill=self.COLORS['primary'], font=self.fonts['small'])
         
         for i, req in enumerate(task_requirements[:3]):
-            y = task_req_y + 18 + (i * 16)
-            text = req[:50]
+            y = task_req_y + 20 + (i * 18)
+            text = req[:55]  # 增加可显示字符数
             draw.text((right_x + 8, y), f"• {text}", fill=self.COLORS['secondary'], font=self.fonts['small'])
         
-        # 垂直分隔线
+        # 垂直分隔线（左侧）
         draw.line([(210, 80), (210, self.height - 80)], fill=self.COLORS['divider'], width=2)
     
     def _add_tilted_pixel_badge(self, draw, agent_data):
-        """右侧装饰区域 - 已移除倾斜像素工牌装饰"""
-        # 此功能已禁用 - 右侧方框已移除
+        """右侧装饰区域 - 已移除"""
         pass
     
-    def _add_footer(self, draw, agent_data):
+    def _generate_qr_code(self, url="https://github.com/MuseLinn/fis-architecture", size=50):
+        """生成QR码（如果qrcode模块不可用则绘制类似QR码的图案）"""
+        if HAS_QRCODE:
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=3,
+                border=1,
+            )
+            qr.add_data(url)
+            qr.make(fit=True)
+            
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+            qr_img = qr_img.convert('RGB')
+            qr_img = qr_img.resize((size, size), Image.Resampling.NEAREST)
+            return qr_img
+        
+        # 没有 qrcode 模块时，绘制类似 QR 码的像素图案
+        qr_img = Image.new('RGB', (size, size), 'white')
+        draw = ImageDraw.Draw(qr_img)
+        
+        # 绘制三个定位角（类似QR码的结构）
+        box_size = size // 7
+        
+        # 左上角定位图案
+        draw.rectangle([0, 0, box_size*3, box_size*3], fill='black', outline='white', width=2)
+        draw.rectangle([box_size, box_size, box_size*2, box_size*2], fill='white')
+        draw.rectangle([box_size+3, box_size+3, box_size*2-3, box_size*2-3], fill='black')
+        
+        # 右上角定位图案
+        draw.rectangle([size-box_size*3, 0, size, box_size*3], fill='black', outline='white', width=2)
+        draw.rectangle([size-box_size*2, box_size, size-box_size, box_size*2], fill='white')
+        draw.rectangle([size-box_size*2+3, box_size+3, size-box_size-3, box_size*2-3], fill='black')
+        
+        # 左下角定位图案
+        draw.rectangle([0, size-box_size*3, box_size*3, size], fill='black', outline='white', width=2)
+        draw.rectangle([box_size, size-box_size*2, box_size*2, size-box_size], fill='white')
+        draw.rectangle([box_size+3, size-box_size*2+3, box_size*2-3, size-box_size-3], fill='black')
+        
+        # 中间随机填充一些像素
+        import random
+        random.seed(url)
+        for y in range(box_size*3, size-box_size*3, 4):
+            for x in range(box_size*3, size, 4):
+                if random.random() > 0.5:
+                    draw.rectangle([x, y, x+3, y+3], fill='black')
+        
+        return qr_img
+    def _add_footer(self, draw, agent_data, card_img):
         """添加底部区域"""
         footer_y = self.height - 65
         
@@ -429,13 +705,19 @@ class BadgeGenerator:
         draw.text((self.width - 200, footer_y + 12), f"VALID UNTIL: {valid_until}", 
                  fill='#666666', font=self.fonts['small'])
         
-        # 右下角像素二维码占位
+        # 右下角QR码（GitHub Repo链接）
         qr_x, qr_y = self.width - 60, footer_y + 8
-        for i in range(5):
-            for j in range(5):
-                if (i + j) % 2 == 0:
-                    draw.rectangle([qr_x + i * 8, qr_y + j * 8, qr_x + i * 8 + 6, qr_y + j * 8 + 6], 
-                                  fill='#ffffff')
+        try:
+            qr_img = self._generate_qr_code("https://github.com/MuseLinn/fis-architecture", size=45)
+            # 粘贴QR码到底部区域
+            card_img.paste(qr_img, (qr_x, qr_y))
+        except Exception as e:
+            # 备用：绘制简单的像素图案
+            for i in range(5):
+                for j in range(5):
+                    if (i + j) % 2 == 0:
+                        draw.rectangle([qr_x + i * 8, qr_y + j * 8, qr_x + i * 8 + 6, qr_y + j * 8 + 6], 
+                                      fill='#ffffff')
 
 
 def generate_badge_with_task(agent_name, role, task_desc, task_requirements, output_dir=None):
