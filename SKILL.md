@@ -1,9 +1,34 @@
 # FIS Architecture Skill
 
-> **Version**: 3.1.0-lite  
+> **Version**: 3.1.0  
 > **Name**: Federal Intelligence System (联邦智能系统 / FIS 联邦智能系统)  
 > **Description**: OpenClaw multi-agent collaboration framework with shared memory, deadlock detection, and skill registry  
-> **Status**: P0 core deployed, Phase 2/3 experimental features staged
+> **Status**: P0 core stable, Phase 2/3 framework ready (user data isolated)
+
+---
+
+## Important Notice: Data Isolation
+
+**This Skill provides framework tools only. Your data stays in your workspace.**
+
+- ✅ P0 Core tools (memory_manager, deadlock_detector, etc.) are deployed to shared hub
+- ✅ Phase 2/3 framework code (kg_manager, gating_controller) is available for activation
+- ❌ **No user data is included** — knowledge graph nodes, memories, and agent data are created in YOUR local workspace
+
+After installation, initialize FIS in your workspace:
+```bash
+python3 ~/.openclaw/workspace/skills/fis-architecture/examples/init_fis31.py
+```
+
+---
+
+## Release Apology
+
+We apologize for version confusion in earlier releases (3.1.0-lite → 3.1.1 → 3.1.1-a → 3.1.2). These were retracted due to:
+1. Version number inconsistency
+2. Unclear experimental feature status
+
+**Current release 3.1.0 is the clean, stable baseline.**
 
 ---
 
@@ -41,19 +66,28 @@ research-uav-gpr/.fis3.1/
 Status: ✅ Healthy, zero Core File pollution
 ```
 
-### Phase 2/3 Features (Implemented in experimental/)
-```
-research-uav-gpr/.fis3.1/experimental/
-├── knowledge_graph/              # Knowledge graph (9 nodes, gating enabled)
-├── lib/
-│   ├── kg_manager.py             # Graph management
-│   ├── gating_controller.py      # Access control (RBAC/ABAC)
-│   ├── retrieval_orchestrator.py # Multi-source search with gating
-│   └── emb_spawn_wrapper.py      # SubAgent embedding generation
-└── POLICY_GATING.md              # Gating policies
+### Phase 2/3 Features (Framework Ready)
 
-Status: ✅ Implemented, staged for Phase 2 activation (move from experimental/ to activate)
+**Framework code is available, user data is created locally:**
+
 ```
+research-uav-gpr/.fis3.1/experimental/  # Created in YOUR workspace
+├── knowledge_graph/nodes/entities/     # YOUR nodes (created by you)
+├── lib/
+│   ├── kg_manager.py                   # Framework: node creation tools
+│   ├── gating_controller.py            # Framework: access control logic
+│   ├── retrieval_orchestrator.py       # Framework: search orchestration
+│   └── emb_spawn_wrapper.py            # Framework: embedding pipeline
+└── POLICY_GATING.md                    # Template: customize your policies
+```
+
+**How to activate:**
+1. Framework code auto-deploys to shared hub
+2. Run `init_fis31.py` to create your local `experimental/` structure
+3. Create your own nodes using `kg_manager` APIs
+4. Your data stays in YOUR workspace, never shared
+
+Status: ✅ Framework ready, user data isolated
 
 ---
 
