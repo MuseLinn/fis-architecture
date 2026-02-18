@@ -41,18 +41,18 @@ research-uav-gpr/.fis3.1/
 Status: ✅ Healthy, zero Core File pollution
 ```
 
-### Phase 2/3 Preview (Staged in experimental/)
+### Phase 2/3 Features (Implemented in experimental/)
 ```
 research-uav-gpr/.fis3.1/experimental/
-├── knowledge_graph/              # Knowledge graph prototype (9 nodes)
+├── knowledge_graph/              # Knowledge graph (9 nodes, gating enabled)
 ├── lib/
 │   ├── kg_manager.py             # Graph management
-│   ├── gating_controller.py      # Access control
-│   ├── retrieval_orchestrator.py # Multi-source search
-│   └── emb_spawn_wrapper.py      # Embedding subagent
+│   ├── gating_controller.py      # Access control (RBAC/ABAC)
+│   ├── retrieval_orchestrator.py # Multi-source search with gating
+│   └── emb_spawn_wrapper.py      # SubAgent embedding generation
 └── POLICY_GATING.md              # Gating policies
 
-Status: 📦 Functional, pending Phase 2 activation
+Status: ✅ Implemented, staged for Phase 2 activation (move from experimental/ to activate)
 ```
 
 ---
