@@ -1,6 +1,6 @@
 # FIS Architecture Skill
 
-> **Version**: 3.1.2  
+> **Version**: 3.1.3  
 > **Name**: Federal Intelligence System (联邦智能系统 / FIS 联邦智能系统)  
 > **Description**: OpenClaw multi-agent collaboration framework with shared memory, deadlock detection, and skill registry  
 > **Status**: P0 core stable, Phase 2/3 framework ready (user data isolated)
@@ -87,6 +87,58 @@ research-shared-hub/.fis3.1/experimental/  # Created in YOUR workspace
 4. Your data stays in YOUR workspace, never shared
 
 Status: ✅ Framework ready, user data isolated
+
+---
+
+## ⚡ For Coordinator Agent: When to Delegate
+
+**收到用户请求后，必须先判断是否需要委派 SubAgent：**
+
+### 决策树（读取 `AGENT_GUIDE.md` 获取完整指南）
+
+```
+用户请求
+    ↓
+┌─────────────────────────────────────────┐
+│ 1. 预计耗时 > 10分钟？                   │
+│ 2. 需要多个专业角色协作？                │
+│ 3. 任务失败影响大（生产环境）？          │
+│ 4. 批量处理大量文件？                    │
+└─────────────────────────────────────────┘
+    ↓ 任一符合
+委派 SubAgent ──→ 生成工卡 ──→ 异步执行 ──→ 汇报结果
+    ↓ 都不符合
+直接处理（快速回复）
+```
+
+### 快速判断
+| 场景 | 处理方式 | 示例 |
+|------|----------|------|
+| 简单问答 (< 5分钟) | ✅ 直接回复 | "查天气", "解释概念" |
+| 代码实现 | ✅ **委派 Worker** | "写个Python脚本处理CSV" |
+| 代码审查 | ✅ **委派 Reviewer** | "审查这段代码的质量" |
+| 技术研究 | ✅ **委派 Researcher** | "调研这个算法的最新进展" |
+| 批量处理 | ✅ **委派多个 Worker** | "处理目录下所有文件" |
+
+### 委派代码模板
+```python
+import sys
+sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
+from subagent_lifecycle import SubAgentLifecycleManager
+
+manager = SubAgentLifecycleManager("cybermao")
+
+# 派发任务
+card = manager.spawn(
+    name="Worker-001",
+    role="worker",  # worker/reviewer/researcher/formatter
+    task_description="具体任务描述",
+    timeout_minutes=60
+)
+
+# 立即回复用户
+print(f"🎫 已派发工号 {card['employee_id']} 处理，预计完成后汇报结果")
+```
 
 ---
 

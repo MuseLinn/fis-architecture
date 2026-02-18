@@ -377,9 +377,26 @@ class SubAgentLifecycleManager:
             )
             result['group_images'] = group_images
             
+            # 将分组工牌也复制到可发送目录
+            import shutil
+            from pathlib import Path
+            temp_dir = Path.home() / '.openclaw' / 'workspace' / 'temp_badges'
+            temp_dir.mkdir(parents=True, exist_ok=True)
+            
+            sendable_groups = {}
+            for role, img_path in group_images.items():
+                if os.path.exists(img_path):
+                    dest = temp_dir / Path(img_path).name
+                    shutil.copy2(img_path, dest)
+                    sendable_groups[role] = str(dest)
+            
+            result['sendable_group_images'] = sendable_groups
+            
             print("\n📸 分组工牌已生成:")
             for role, path in group_images.items():
                 print(f"   {role}: {path}")
+                if role in sendable_groups:
+                    print(f"       (可发送: {sendable_groups[role]})")
         
         return result
     
@@ -833,6 +850,69 @@ class SubAgentLifecycleManager:
                         pass  # Invalid deadline format
         
         return expired
+
+    def _get_default_responsibilities(self, role: str) -> list:
+        """根据角色获取默认职责"""
+        responsibilities_map = {
+            "worker": [
+                "Execute assigned tasks with precision",
+                "Report progress and blockers promptly",
+                "Follow FIS 3.1 protocol standards",
+                "Deliver high-quality outputs"
+            ],
+            "reviewer": [
+                "Review code for bugs and style issues",
+                "Verify output specifications",
+                "Validate edge cases and test coverage",
+                "Approve or reject with clear reasons"
+            ],
+            "researcher": [
+                "Research and analyze technical topics",
+                "Gather information from multiple sources",
+                "Summarize findings in structured format",
+                "Report conclusions with evidence"
+            ],
+            "formatter": [
+                "Format and organize content",
+                "Ensure consistent style and structure",
+                "Clean up and optimize output",
+                "Maintain readability and clarity"
+            ]
+        }
+        return responsibilities_map.get(role.lower(), [
+            "Execute assigned tasks",
+            "Report to parent agent",
+            "Maintain workspace integrity"
+        ])
+    
+    def _get_default_task_requirements(self, role: str) -> list:
+        """根据角色获取默认任务输出要求"""
+        requirements_map = {
+            "worker": [
+                "Complete task within deadline",
+                "Provide working deliverables",
+                "Include documentation if needed"
+            ],
+            "reviewer": [
+                "Provide detailed review report",
+                "List issues with severity levels",
+                "Give actionable recommendations"
+            ],
+            "researcher": [
+                "Provide comprehensive research report",
+                "Cite sources and references",
+                "Summarize key findings"
+            ],
+            "formatter": [
+                "Deliver formatted output",
+                "Ensure consistency across files",
+                "Maintain original content meaning"
+            ]
+        }
+        return requirements_map.get(role.lower(), [
+            "Complete assigned tasks",
+            "Report progress and results"
+        ])
 
 if __name__ == "__main__":
     print("FIS 3.1 SubAgent Lifecycle Manager loaded")
