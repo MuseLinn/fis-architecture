@@ -154,8 +154,10 @@ class SubAgentLifecycleManager:
         """
         准备子代理创建通知
         
+        将工卡临时复制到可访问目录，便于主会话通过 message 工具发送
+        
         Returns:
-            dict: 通知信息，包含 message 和 badge_image_path
+            dict: 通知信息，包含 message 和 sendable_badge_path
                   主会话应使用这些信息调用 message 工具发送
         """
         try:
@@ -178,12 +180,57 @@ class SubAgentLifecycleManager:
 任务执行中，完成后将自动汇报结果。"""
             
             badge_image = card.get('badge', {}).get('image')
+            sendable_badge_path = None
+            
+            # 将工卡复制到可访问目录（如果需要发送）
+            if badge_image and os.path.exists(badge_image):
+                try:
+                    import shutil
+                    from pathlib import Path
+                    
+                    # 找到当前 Agent 的 workspace
+                    # 尝试多个可能的位置
+                    possible_workspace_paths = [
+                        Path.home() / '.openclaw' / 'workspace' / 'temp_badges',
+                        Path.home() / '.openclaw' / 'temp_badges',
+                        Path.cwd() / 'temp_badges',
+                    ]
+                    
+                    # 使用第一个可用的路径
+                    temp_dir = None
+                    for path in possible_workspace_paths:
+                        try:
+                            path.mkdir(parents=True, exist_ok=True)
+                            # 测试是否可写
+                            test_file = path / '.test_write'
+                            test_file.touch()
+                            test_file.unlink()
+                            temp_dir = path
+                            break
+                        except:
+                            continue
+                    
+                    if temp_dir:
+                        # 复制工卡到临时目录
+                        badge_filename = Path(badge_image).name
+                        sendable_path = temp_dir / badge_filename
+                        shutil.copy2(badge_image, sendable_path)
+                        sendable_badge_path = str(sendable_path)
+                        print(f"  工卡已复制到可发送路径: {sendable_badge_path}")
+                    else:
+                        print(f"  警告: 未找到可写的临时目录")
+                        sendable_badge_path = badge_image
+                        
+                except Exception as e:
+                    print(f"  复制工卡失败: {e}")
+                    sendable_badge_path = badge_image
             
             notification = {
                 "timestamp": datetime.now().isoformat(),
                 "employee_id": card['employee_id'],
                 "message": message_text,
-                "badge_image": badge_image,
+                "badge_image": badge_image,  # 原始路径（在工作区内，会随 terminate 清理）
+                "sendable_badge_path": sendable_badge_path,  # 可发送的临时路径
                 "status": "ready_to_send"
             }
             
@@ -355,13 +402,17 @@ class SubAgentLifecycleManager:
         # Generate image badge
         if badge_format in ["image", "both"]:
             try:
-                # Use v6 generator (CryptoPunks style)
+                # Use v7 generator with SubAgent-specific output dir
                 import sys
                 from pathlib import Path
                 sys.path.insert(0, str(Path(__file__).parent))
-                from badge_generator import BadgeGenerator
+                from badge_generator_v7 import BadgeGenerator
                 
-                generator = BadgeGenerator()
+                # 工卡生成在工作区内的 badges/ 目录，便于清理
+                workspace_path = Path(card['workspace']['path'])
+                badge_output_dir = workspace_path / 'badges'
+                
+                generator = BadgeGenerator(output_dir=badge_output_dir)
                 image_path = generator.create_badge({
                     'name': card['name'],
                     'id': card['employee_id'],
