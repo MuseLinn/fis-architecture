@@ -1,78 +1,90 @@
 # FIS Architecture Skill
 
-> **版本**: 3.1.0-lite  
-> **名称**: Federal Intelligence System (联邦智能系统)  
-> **定位**: OpenClaw 多 Agent 协作架构  
-> **状态**: P0 核心功能已部署，Phase 2/3 功能预览中
+> **Version**: 3.1.0-lite  
+> **Name**: Federal Intelligence System (联邦智能系统 / FIS 联邦智能系统)  
+> **Description**: OpenClaw multi-agent collaboration framework with shared memory, deadlock detection, and skill registry  
+> **Status**: P0 core deployed, Phase 2/3 experimental features staged
 
 ---
 
-## 当前架构状态
+## Architecture Overview
 
-### P0 核心功能 (已部署)
+FIS 3.1 Lite is a lightweight, file-based multi-agent collaboration framework designed for OpenClaw environments. It enables:
+
+- **Shared Memory**: Three-tier storage (working/short_term/long_term) for agent communication
+- **Deadlock Detection**: DFS-based cycle detection for task dependency management
+- **Skill Registry**: Dynamic capability discovery across agents
+- **SubAgent Lifecycle**: Worker/Reviewer role management with badge system
+- **Zero Core File Pollution**: All extensions isolated to `.fis3.1/` directories
+
+---
+
+## Current Status
+
+### P0 Core (Deployed)
 ```
 research-uav-gpr/.fis3.1/
-├── lib/                          # 核心 Python 库
-│   ├── memory_manager.py         ✅ 共享记忆管理
-│   ├── deadlock_detector.py      ✅ 死锁检测 (DFS)
-│   ├── skill_registry.py         ✅ 技能注册发现
-│   └── subagent_lifecycle.py     ✅ 子代理生命周期 + 工卡系统
-├── memories/                     # 三层记忆存储
-│   ├── working/                  # TTL: 1小时
-│   ├── short_term/               # TTL: 24小时
-│   └── long_term/                # 永久
-├── skills/
-│   ├── registry.json             # 技能索引 (Pulse 4项技能已注册)
-│   └── manifests/                # Agent 技能清单
-└── heartbeat/                    # 心跳状态
+├── lib/                          # Core Python libraries
+│   ├── memory_manager.py         # Shared memory management
+│   ├── deadlock_detector.py      # DFS deadlock detection
+│   ├── skill_registry.py         # Skill discovery & registration
+│   └── subagent_lifecycle.py     # SubAgent lifecycle + badge system
+├── memories/                     # Three-tier memory storage
+│   ├── working/                  # TTL: 1 hour
+│   ├── short_term/               # TTL: 24 hours
+│   └── long_term/                # Permanent
+├── skills/                       # Skill registry
+│   ├── registry.json             # 13 skills, 5 agents registered
+│   └── manifests/                # Agent skill manifests
+└── heartbeat/                    # Heartbeat status
 
-验证状态: ✅ 健康运行，零 Core File 污染
+Status: ✅ Healthy, zero Core File pollution
 ```
 
-### Phase 2/3 预览 (experimental/)
+### Phase 2/3 Preview (Staged in experimental/)
 ```
 research-uav-gpr/.fis3.1/experimental/
-├── knowledge_graph/              # 知识图谱原型 (9 nodes)
+├── knowledge_graph/              # Knowledge graph prototype (9 nodes)
 ├── lib/
-│   ├── kg_manager.py             # 图谱管理
-│   ├── gating_controller.py      # 访问控制
-│   ├── retrieval_orchestrator.py # 多源检索
-│   └── emb_spawn_wrapper.py      # 向量化子代理
-└── POLICY_GATING.md              # 门控策略文档
+│   ├── kg_manager.py             # Graph management
+│   ├── gating_controller.py      # Access control
+│   ├── retrieval_orchestrator.py # Multi-source search
+│   └── emb_spawn_wrapper.py      # Embedding subagent
+└── POLICY_GATING.md              # Gating policies
 
-状态: 📦 功能完整，待 Phase 2 正式激活
+Status: 📦 Functional, pending Phase 2 activation
 ```
 
 ---
 
-## 快速命令
+## Quick Start
 
 ```bash
-# 初始化 FIS 3.1 环境
+# Initialize FIS 3.1 environment
 python3 ~/.openclaw/workspace/skills/fis-architecture/examples/init_fis31.py
 
-# 检查架构健康
+# Check architecture health
 ~/.openclaw/system/scripts/fis_maintenance.sh check
 
-# 清理冗余 (dry-run)
+# Cleanup redundancy (dry-run)
 ~/.openclaw/system/scripts/fis_cleanup_redundancy.sh
 
-# 子代理清理
+# Cleanup subagents
 python3 ~/.openclaw/system/scripts/fis_subagent_cleanup.py
 
-# 自动生成工卡图片
+# Generate badge images
 python3 ~/.openclaw/workspace/skills/fis-architecture/examples/generate_badges.py
 ```
 
 ---
 
-## Python API 参考
+## Python API Reference
 
-### 共享记忆
+### Shared Memory
 ```python
 from memory_manager import write_memory, query_memory
 
-# Pulse 写入分析结果
+# Agent writes analysis result
 write_memory(
     agent="pulse",
     content={"spectrum": data, "snr": 15.5},
@@ -80,7 +92,7 @@ write_memory(
     tags=["gpr", "fis-uav-001"]
 )
 
-# CyberMao 查询
+# Coordinator queries
 results = query_memory(
     query="gpr fis-uav-001",
     agent_filter=["pulse"],
@@ -88,84 +100,81 @@ results = query_memory(
 )
 ```
 
-### 死锁检测
+### Deadlock Detection
 ```python
 from deadlock_detector import check_and_resolve
 
 report = check_and_resolve()
 if report["deadlock_found"]:
-    print(f"发现死锁: {report['deadlocks']}")
-    print(f"已解决: {report['resolved']}")
+    print(f"Deadlocks: {report['deadlocks']}")
+    print(f"Resolved: {report['resolved']}")
 ```
 
-### 技能注册
+### Skill Registry
 ```python
 from skill_registry import register_skills, discover_skills
 
-# 注册技能
+# Register agent skills
 register_skills("pulse", manifest)
 
-# 发现技能
+# Discover available skills
 skills = discover_skills(query="SFCW")
 ```
 
-### 子代理生命周期
+### SubAgent Lifecycle (Badge System)
 ```python
 from subagent_lifecycle import SubAgentLifecycleManager, SubAgentRole
 
 manager = SubAgentLifecycleManager("cybermao")
 
-# 发放工卡
+# Issue badge (spawn subagent)
 worker = manager.spawn(
     name="Worker-001",
     role=SubAgentRole.WORKER,
-    task_description="实现 PTVF 滤波算法"
+    task_description="Implement PTVF filter algorithm"
 )
 
-# 生成工卡图片 (WhatsApp/Feishu 适配)
+# Generate badge image (WhatsApp/Feishu compatible)
 image_path = manager.generate_badge_image(worker['employee_id'])
 
-# 批量生成
+# Batch generation (2x2 grid)
 multi_image = manager.generate_multi_badge_image([id1, id2, id3, id4])
 
-# 终止 (自动清理工作区)
+# Terminate (auto-cleanup workspace)
 manager.terminate(worker['employee_id'], "completed")
 ```
 
 ---
 
-## 目录结构规范
+## Directory Structure
 
 ```
 ~/.openclaw/
-├── workspace/                    # CyberMao (主控)
-│   ├── MEMORY.md                 # Core File (不变)
-│   ├── HEARTBEAT.md              # Core File (不变)
-│   └── .fis3.1/                  # FIS 3.1 扩展
+├── workspace/                    # CyberMao (coordinator)
+│   ├── MEMORY.md                 # Core File (protected)
+│   ├── HEARTBEAT.md              # Core File (protected)
+│   └── .fis3.1/                  # FIS 3.1 extension
 │       └── local_cache/
 │
-├── workspace-radar/              # Pulse (雷达专家)
+├── workspace-radar/              # Pulse (radar specialist)
 │   ├── MEMORY.md
 │   ├── HEARTBEAT.md
 │   └── .fis3.1/
-│       ├── skill_manifest.json   # 技能清单
+│       ├── skill_manifest.json   # Skill manifest
 │       └── local_cache/
 │
-├── workspace-[agent]/            # 其他专家 Agent
-│   └── ...
+├── workspace-painter/            # Painter (visualization)
+├── workspace-formatter/          # Formatter (formatting)
+├── workspace-hardware/           # Hardware (hardware design)
 │
-└── research-uav-gpr/             # 共享中心
-    ├── .fis3.1/                  # FIS 3.1 共享基础设施
-    │   ├── lib/                  # Python 库
-    │   ├── memories/             # 共享记忆
-    │   ├── skills/               # 技能注册表
-    │   ├── heartbeat/            # 心跳状态
-    │   └── experimental/         # Phase 2/3 预览
-    │       ├── knowledge_graph/
-    │       ├── lib/
-    │       └── POLICY_GATING.md
-    │
-    └── tickets/                  # 任务票据
+└── research-uav-gpr/             # Shared Hub
+    ├── .fis3.1/                  # FIS 3.1 shared infrastructure
+    │   ├── lib/                  # Python libraries
+    │   ├── memories/             # Shared memory
+    │   ├── skills/               # Skill registry
+    │   ├── heartbeat/            # Heartbeat status
+    │   └── experimental/         # Phase 2/3 preview
+    └── tickets/                  # Task tickets
         ├── active/
         ├── completed/
         └── archive/
@@ -173,89 +182,102 @@ manager.terminate(worker['employee_id'], "completed")
 
 ---
 
-## 设计原则
+## Design Principles
 
-### 1. 零污染 Core Files
+### 1. Zero Core File Pollution (零污染 Core Files)
 ```
-❌ 禁止修改:
-   - workspace/MEMORY.md, HEARTBEAT.md (其他 Agent)
-   - openclaw.json (主配置)
+❌ Never modify:
+   - Other agents' MEMORY.md, HEARTBEAT.md
+   - openclaw.json (main config)
 
-✅ 只允许新增:
-   - research-uav-gpr/.fis3.1/ (共享基础设施)
-   - workspace/.fis3.1/ (本 Agent 扩展)
+✅ Only add to:
+   - research-uav-gpr/.fis3.1/ (shared infrastructure)
+   - workspace/.fis3.1/ (agent extension)
 ```
 
-### 2. 分层隔离
-| 层级 | 范围 | 访问规则 |
-|------|------|----------|
-| L1 Core Files | `*/MEMORY.md` | 仅本 Agent |
-| L2 Agent 工作区 | `workspace-*/` | 仅本 Agent |
-| L3 Shared Hub | `research-uav-gpr/` | 全 Agent 受控读写 |
-| L4 FIS 扩展 | `*/.fis3.1/` | 各 Agent 独立 |
+### 2. Layered Isolation (分层隔离)
+| Layer | Scope | Access Rule |
+|-------|-------|-------------|
+| L1 Core Files | `*/MEMORY.md` | Agent-local only |
+| L2 Agent Workspace | `workspace-*/` | Agent-local only |
+| L3 Shared Hub | `research-uav-gpr/` | Controlled shared access |
+| L4 FIS Extension | `*/.fis3.1/` | Agent-independent |
 
-### 3. 纯文件机制
-- 无新增服务/进程
-- 100% 文件系统操作
-- 可审计、可恢复
-
----
-
-## 与 FIS 3.0 对比
-
-| 特性 | FIS 3.0 | FIS 3.1 Lite |
-|------|---------|--------------|
-| 任务票据 | ✅ 基础格式 | ✅ 增强格式 (兼容) |
-| 记忆共享 | ❌ 无 | ✅ Shared Hub 分层 |
-| 死锁检测 | ❌ 无 | ✅ DFS 检测 |
-| 技能发现 | ❌ 硬编码 | ✅ 动态注册表 |
-| 子代理 | ❌ 无 | ✅ 工卡系统 |
-| Core Files 污染 | - | ✅ 零污染 |
-| 新增服务 | - | 无 (纯文件) |
+### 3. File-First Architecture (纯文件机制)
+- No new services/processes
+- 100% file system operations
+- Auditable and recoverable
 
 ---
 
-## 更新记录
+## Comparison: FIS 3.0 vs 3.1 Lite
 
-### 2026-02-18: Phase 2/3 预览归档
-- 知识图谱和门控移至 `experimental/`
-- 保持 P0 核心简洁
-- 添加 TOOLS.md 快速参考
-
-### 2026-02-17: FIS 3.1 Lite 初始部署
-- 部署 memory_manager, deadlock_detector, skill_registry
-- 部署 subagent_lifecycle + 工卡系统
-- Pulse 4 项技能注册完成
-
-### 2026-02-17: 工卡图片生成
-- 添加 `generate_badge_image()` PNG 生成
-- 支持批量 `generate_multi_badge_image()`
-- 适配 WhatsApp/Feishu
-
-### 2026-02-17: 子代理自动清理
-- `terminate()` 自动删除工作区
-- 新增 `cleanup_all_terminated()` 批量清理
+| Feature | FIS 3.0 | FIS 3.1 Lite |
+|---------|---------|--------------|
+| Task Tickets | ✅ Basic format | ✅ Enhanced (backward compatible) |
+| Shared Memory | ❌ None | ✅ Tiered storage |
+| Deadlock Detection | ❌ None | ✅ DFS detection |
+| Skill Discovery | ❌ Hard-coded | ✅ Dynamic registry |
+| SubAgent | ❌ None | ✅ Badge system |
+| Core File Pollution | - | ✅ Zero pollution |
+| New Services | - | None (file-based) |
 
 ---
 
-## 文件位置
+## Security Note
+
+This Skill contains system administration scripts for:
+- Multi-agent workspace lifecycle management
+- File system maintenance (cleanup expired memories)
+- Task deadlock detection
+
+Some antivirus software may flag automation scripts as suspicious. All code is open-source and auditable with no malicious behavior.
+
+---
+
+## Changelog
+
+### 2026-02-18: Phase 2/3 Staging
+- Moved knowledge graph and gating to `experimental/`
+- Kept P0 core streamlined
+- Added TOOLS.md quick reference
+- Published to ClawHub
+
+### 2026-02-17: FIS 3.1 Lite Initial Deploy
+- Deployed memory_manager, deadlock_detector, skill_registry
+- Deployed subagent_lifecycle + badge system
+- Registered 4 Pulse skills
+
+### 2026-02-17: Badge Image Generation
+- Added `generate_badge_image()` PNG generation
+- Batch support via `generate_multi_badge_image()`
+- WhatsApp/Feishu compatible layouts
+
+### 2026-02-17: SubAgent Auto-Cleanup
+- `terminate()` auto-deletes workspace folders
+- Added `cleanup_all_terminated()` batch method
+
+---
+
+## File Locations
 
 ```
 ~/.openclaw/workspace/skills/fis-architecture/
-├── SKILL.md                    # 本文件
-├── QUICK_REFERENCE.md          # 速查手册
-├── lib/                        # Python 库 (已部署到 shared hub)
+├── SKILL.md                    # This file
+├── QUICK_REFERENCE.md          # Quick reference
+├── package.json                # ClawHub metadata
+├── lib/                        # Python libraries (deployed to shared hub)
 │   ├── memory_manager.py
 │   ├── deadlock_detector.py
 │   ├── skill_registry.py
 │   ├── subagent_lifecycle.py
 │   ├── badge_image_pil.py
 │   └── badge_generator.py
-├── examples/                   # 使用示例
+├── examples/                   # Usage examples
 │   ├── init_fis31.py
 │   ├── subagent_pipeline.py
 │   └── generate_badges.py
-└── system/                     # 系统脚本
+└── system/                     # System scripts
     ├── fis_maintenance.sh
     ├── fis_cleanup_redundancy.sh
     └── fis_subagent_cleanup.py
@@ -263,5 +285,5 @@ manager.terminate(worker['employee_id'], "completed")
 
 ---
 
-*FIS 3.1 Lite - 质胜于量*  
+*FIS 3.1 Lite — Quality over Quantity*  
 *Designed by CyberMao 🐱⚡*
