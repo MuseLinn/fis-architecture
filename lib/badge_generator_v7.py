@@ -167,15 +167,15 @@ class BadgeGenerator:
             if chinese_font:
                 # 为 ttc 文件传递 index 参数
                 font_kwargs = {'index': chinese_font_index} if chinese_font_index is not None else {}
-                fonts['title'] = ImageFont.truetype(chinese_font, 18, **font_kwargs)
-                fonts['header'] = ImageFont.truetype(chinese_font, 13, **font_kwargs)
-                fonts['text'] = ImageFont.truetype(chinese_font, 11, **font_kwargs)
-                fonts['small'] = ImageFont.truetype(chinese_font, 9, **font_kwargs)
+                fonts['title'] = ImageFont.truetype(chinese_font, 22, **font_kwargs)
+                fonts['header'] = ImageFont.truetype(chinese_font, 16, **font_kwargs)
+                fonts['text'] = ImageFont.truetype(chinese_font, 14, **font_kwargs)
+                fonts['small'] = ImageFont.truetype(chinese_font, 12, **font_kwargs)
             else:
-                fonts['title'] = ImageFont.truetype(mono_font, 18) if mono_font else default_font
-                fonts['header'] = ImageFont.truetype(mono_font, 13) if mono_font else default_font
-                fonts['text'] = ImageFont.truetype(mono_font, 11) if mono_font else default_font
-                fonts['small'] = ImageFont.truetype(mono_font, 9) if mono_font else default_font
+                fonts['title'] = ImageFont.truetype(mono_font, 22) if mono_font else default_font
+                fonts['header'] = ImageFont.truetype(mono_font, 16) if mono_font else default_font
+                fonts['text'] = ImageFont.truetype(mono_font, 14) if mono_font else default_font
+                fonts['small'] = ImageFont.truetype(mono_font, 12) if mono_font else default_font
             
             fonts['pixel'] = ImageFont.truetype(mono_font, 9) if mono_font else default_font
         except Exception as e:
@@ -391,56 +391,9 @@ class BadgeGenerator:
         draw.line([(210, 80), (210, self.height - 80)], fill=self.COLORS['divider'], width=2)
     
     def _add_tilted_pixel_badge(self, draw, agent_data):
-        """添加右侧倾斜像素工牌装饰"""
-        # 在右侧空白区域绘制一个倾斜的像素风格小工牌
-        badge_x = self.width - 140
-        badge_y = 200
-        
-        # 创建半透明层
-        overlay = Image.new('RGBA', (self.width, self.height), (0, 0, 0, 0))
-        overlay_draw = ImageDraw.Draw(overlay)
-        
-        # 倾斜角度模拟 - 通过绘制偏移的矩形
-        # 外框
-        for offset in range(3):
-            overlay_draw.rectangle(
-                [badge_x + offset, badge_y - offset, badge_x + 80 + offset, badge_y + 100 - offset],
-                outline=(255, 77, 0, 100),  # 半透明橙色
-                width=2
-            )
-        
-        # 内部像素头像简化版
-        pixel_size = 4
-        for row in range(12):
-            for col in range(12):
-                if random.random() > 0.3:  # 70% 填充率
-                    color = random.choice([
-                        (255, 77, 0, 150),   # 橙色
-                        (26, 26, 26, 150),   # 黑色
-                        (102, 102, 102, 100), # 灰色
-                    ])
-                    x = badge_x + 10 + col * pixel_size
-                    y = badge_y + 10 + row * pixel_size
-                    overlay_draw.rectangle(
-                        [x, y, x + pixel_size, y + pixel_size],
-                        fill=color
-                    )
-        
-        # 工号文字
-        agent_id = agent_data.get('id', 'ID')[4:8] if len(agent_data.get('id', '')) > 8 else '0001'
-        overlay_draw.text((badge_x + 15, badge_y + 70), f"#{agent_id}", 
-                         fill=(255, 77, 0, 200), font=self.fonts['small'])
-        
-        # 将半透明层合并到主画布
-        # 由于 PIL Draw 不支持直接混合，我们使用简单方法
-        # 在 draw 上直接绘制低饱和度的颜色来模拟透明效果
-        badge_color = '#ff4d00'
-        for offset in range(2):
-            draw.rectangle(
-                [badge_x + offset, badge_y - offset, badge_x + 70 + offset, badge_y + 90 - offset],
-                outline='#ffaa80',  # 浅橙色模拟透明
-                width=1
-            )
+        """右侧装饰区域 - 已移除倾斜像素工牌装饰"""
+        # 此功能已禁用 - 右侧方框已移除
+        pass
     
     def _add_footer(self, draw, agent_data):
         """添加底部区域"""

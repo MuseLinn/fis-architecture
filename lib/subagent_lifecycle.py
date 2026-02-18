@@ -64,7 +64,9 @@ class SubAgentLifecycleManager:
               task_description: str,
               timeout_minutes: int = 60,
               resources: list = None,
-              badge_format: str = "both") -> dict:
+              badge_format: str = "both",
+              responsibilities: list = None,
+              task_requirements: list = None) -> dict:
         """
         创建子代理（发工卡）
         
@@ -76,6 +78,8 @@ class SubAgentLifecycleManager:
             resources: 授权资源列表
             badge_format: 工卡格式 ("text", "image", "both")
                          "both" - 同时生成 ASCII 文字和图片 (默认)
+            responsibilities: 职责列表（可选，默认根据角色生成）
+            task_requirements: 任务输出要求（可选，默认根据角色生成）
         
         Returns:
             工卡信息 dict，包含 badge.text 和 badge.image
@@ -98,7 +102,9 @@ class SubAgentLifecycleManager:
                 "description": task_description,
                 "created_at": datetime.now().isoformat(),
                 "deadline": (datetime.now() + timedelta(minutes=timeout_minutes)).isoformat(),
-                "resources_granted": resources or ["file_read", "file_write"]
+                "resources_granted": resources or ["file_read", "file_write"],
+                "responsibilities": responsibilities or self._get_default_responsibilities(role.value),
+                "task_requirements": task_requirements or self._get_default_task_requirements(role.value)
             },
             
             # 工作区配置
@@ -420,19 +426,27 @@ class SubAgentLifecycleManager:
                 badge_output_dir = workspace_path / 'badges'
                 
                 generator = BadgeGenerator(output_dir=badge_output_dir)
+                
+                # 使用动态的职责和任务要求
+                responsibilities = card['task'].get('responsibilities', [
+                    f"Execute {card['role']} tasks",
+                    "Report to parent agent",
+                    "Maintain workspace integrity"
+                ])
+                task_requirements = card['task'].get('task_requirements', [
+                    "Complete assigned tasks",
+                    "Report progress and results"
+                ])
+                
                 image_path = generator.create_badge({
                     'name': card['name'],
                     'id': card['employee_id'],
                     'role': card['role'].upper(),
                     'task_id': f"#{card['role'][:4].upper()}-{card['employee_id'][-4:]}",
                     'soul': f'"{card["task"]["description"][:40]}..."' if len(card["task"]["description"]) > 40 else f'"{card["task"]["description"]}"',
-                    'responsibilities': [
-                        f"Execute {card['role']} tasks",
-                        "Report to parent agent",
-                        "Maintain workspace integrity",
-                        "Complete before deadline"
-                    ],
+                    'responsibilities': responsibilities,
                     'output_formats': 'MARKDOWN | JSON | TXT',
+                    'task_requirements': task_requirements,
                     'barcode_id': card['employee_id'],
                     'status': card['status'].upper(),
                 })
@@ -611,43 +625,25 @@ class SubAgentLifecycleManager:
         return None
     
     def generate_badge(self, employee_id: str) -> str:
-        """生成 ASCII 工卡（用于展示）"""
+        """生成简化 ASCII 工卡（避免框线错位）"""
         card = self.get_card(employee_id)
         if not card:
             return "工卡不存在"
         
-        badge = f"""
-╔══════════════════════════════════════════════════════════════╗
-║                     FIS 3.1 LITE                             ║
-║              联邦智能系统 · 子代理工卡                        ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  ┌──────────────────────────────────────────────────────┐  ║
-║  │  照                                                  │  ║
-║  │  片    🤖                                           │  ║
-║  │  位                                                  │  ║
-║  │  置                                                  │  ║
-║  └──────────────────────────────────────────────────────┘  ║
-║                                                              ║
-║  工号: {card['employee_id']:<45}║
-║  姓名: {card['name']:<45}║
-║  角色: {card['role'].upper():<45}║
-║  部门: {card['parent']:<45}║
-║                                                              ║
-║  状态: {'🟢 ' + card['status'].upper() if card['status'] == 'active' else '🟡 ' + card['status'].upper():<45}║
-║  有效期至: {card['task']['deadline'][:19]:<42}║
-║                                                              ║
-║  ┌──────────────────────────────────────────────────────┐  ║
-║  │ 权限:                                                 │  ║
-║  │  {'✓' if card['permissions']['can_read_shared_hub'] else '✗'} 读共享中心          │  ║
-║  │  {'✓' if card['permissions']['can_write_shared_hub'] else '✗'} 写共享中心 (需父代)│  ║
-║  │  {'✓' if card['permissions']['can_call_other_agents'] else '✗'} 调用其他Agent     │  ║
-║  │  {'✓' if card['permissions']['can_modify_tickets'] else '✗'} 修改票据           │  ║
-║  └──────────────────────────────────────────────────────┘  ║
-║                                                              ║
-║         签发: CyberMao    日期: {datetime.now().strftime('%Y-%m-%d'):<25}║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+        # 简化格式，避免框线错位
+        status_icon = '🟢' if card['status'] == 'active' else '🟡'
+        
+        badge = f"""**🎫 FIS 3.1 子代理工卡**
+
+**工号:** {card['employee_id']}
+**姓名:** {card['name']}
+**角色:** {card['role'].upper()}
+**状态:** {status_icon} {card['status'].upper()}
+**任务:** {card['task']['description'][:40]}{'...' if len(card['task']['description']) > 40 else ''}
+
+权限: {'✓读' if card['permissions']['can_read_shared_hub'] else '✗读'} {'✓写' if card['permissions']['can_write_shared_hub'] else '✗写'} {'✓调' if card['permissions']['can_call_other_agents'] else '✗调'} {'✓票' if card['permissions']['can_modify_tickets'] else '✗票'}
+
+签发: CyberMao | {datetime.now().strftime('%Y-%m-%d')}
 """
         return badge
 
