@@ -1,6 +1,6 @@
 # FIS Architecture Skill
 
-> **Version**: 3.1.0  
+> **Version**: 3.1.2  
 > **Name**: Federal Intelligence System (联邦智能系统 / FIS 联邦智能系统)  
 > **Description**: OpenClaw multi-agent collaboration framework with shared memory, deadlock detection, and skill registry  
 > **Status**: P0 core stable, Phase 2/3 framework ready (user data isolated)
@@ -22,13 +22,12 @@ python3 ~/.openclaw/workspace/skills/fis-architecture/examples/init_fis31.py
 
 ---
 
-## Release Apology
+## Release Note
 
-We apologize for version confusion in earlier releases (3.1.0-lite → 3.1.1 → 3.1.1-a → 3.1.2). These were retracted due to:
-1. Version number inconsistency
-2. Unclear experimental feature status
-
-**Current release 3.1.0 is the clean, stable baseline.**
+**v3.1.2** - Clean release with generalization:
+- Removed personal configuration examples
+- Removed unrelated utilities (tts_edge)
+- All examples now use generic placeholders
 
 ---
 
@@ -48,20 +47,20 @@ FIS 3.1 Lite is a lightweight, file-based multi-agent collaboration framework de
 
 ### P0 Core (Deployed)
 ```
-research-uav-gpr/.fis3.1/
-├── lib/                          # Core Python libraries
-│   ├── memory_manager.py         # Shared memory management
-│   ├── deadlock_detector.py      # DFS deadlock detection
-│   ├── skill_registry.py         # Skill discovery & registration
-│   └── subagent_lifecycle.py     # SubAgent lifecycle + badge system
-├── memories/                     # Three-tier memory storage
-│   ├── working/                  # TTL: 1 hour
-│   ├── short_term/               # TTL: 24 hours
-│   └── long_term/                # Permanent
-├── skills/                       # Skill registry
-│   ├── registry.json             # 13 skills, 5 agents registered
-│   └── manifests/                # Agent skill manifests
-└── heartbeat/                    # Heartbeat status
+research-shared-hub/.fis3.1/           # (or your preferred shared directory)
+├── lib/                               # Core Python libraries
+│   ├── memory_manager.py              # Shared memory management
+│   ├── deadlock_detector.py           # DFS deadlock detection
+│   ├── skill_registry.py              # Skill discovery & registration
+│   └── subagent_lifecycle.py          # SubAgent lifecycle + badge system
+├── memories/                          # Three-tier memory storage
+│   ├── working/                       # TTL: 1 hour
+│   ├── short_term/                    # TTL: 24 hours
+│   └── long_term/                     # Permanent
+├── skills/                            # Skill registry
+│   ├── registry.json                  # Skill index
+│   └── manifests/                     # Agent skill manifests
+└── heartbeat/                         # Heartbeat status
 
 Status: ✅ Healthy, zero Core File pollution
 ```
@@ -71,14 +70,14 @@ Status: ✅ Healthy, zero Core File pollution
 **Framework code is available, user data is created locally:**
 
 ```
-research-uav-gpr/.fis3.1/experimental/  # Created in YOUR workspace
-├── knowledge_graph/nodes/entities/     # YOUR nodes (created by you)
+research-shared-hub/.fis3.1/experimental/  # Created in YOUR workspace
+├── knowledge_graph/nodes/entities/        # YOUR nodes (created by you)
 ├── lib/
-│   ├── kg_manager.py                   # Framework: node creation tools
-│   ├── gating_controller.py            # Framework: access control logic
-│   ├── retrieval_orchestrator.py       # Framework: search orchestration
-│   └── emb_spawn_wrapper.py            # Framework: embedding pipeline
-└── POLICY_GATING.md                    # Template: customize your policies
+│   ├── kg_manager.py                      # Framework: node creation tools
+│   ├── gating_controller.py               # Framework: access control logic
+│   ├── retrieval_orchestrator.py          # Framework: search orchestration
+│   └── emb_spawn_wrapper.py               # Framework: embedding pipeline
+└── POLICY_GATING.md                       # Template: customize your policies
 ```
 
 **How to activate:**
@@ -120,16 +119,16 @@ from memory_manager import write_memory, query_memory
 
 # Agent writes analysis result
 write_memory(
-    agent="pulse",
-    content={"spectrum": data, "snr": 15.5},
+    agent="worker",                    # YOUR agent name
+    content={"result": data, "score": 0.95},
     layer="short_term",
-    tags=["gpr", "fis-uav-001"]
+    tags=["project", "task-001"]       # YOUR tags
 )
 
 # Coordinator queries
 results = query_memory(
-    query="gpr fis-uav-001",
-    agent_filter=["pulse"],
+    query="project task",              # YOUR query
+    agent_filter=["worker"],           # YOUR agents
     limit=5
 )
 ```
@@ -149,26 +148,26 @@ if report["deadlock_found"]:
 from skill_registry import register_skills, discover_skills
 
 # Register agent skills
-register_skills("pulse", manifest)
+register_skills("my_agent", manifest)  # YOUR agent name
 
 # Discover available skills
-skills = discover_skills(query="SFCW")
+skills = discover_skills(query="processing")  # YOUR query
 ```
 
 ### SubAgent Lifecycle (Badge System)
 ```python
 from subagent_lifecycle import SubAgentLifecycleManager, SubAgentRole
 
-manager = SubAgentLifecycleManager("cybermao")
+manager = SubAgentLifecycleManager("coordinator")  # YOUR coordinator name
 
 # Issue badge (spawn subagent)
 worker = manager.spawn(
     name="Worker-001",
     role=SubAgentRole.WORKER,
-    task_description="Implement PTVF filter algorithm"
+    task_description="Your task description here"  # YOUR task
 )
 
-# Generate badge image (WhatsApp/Feishu compatible)
+# Generate badge image
 image_path = manager.generate_badge_image(worker['employee_id'])
 
 # Batch generation (2x2 grid)
@@ -184,31 +183,30 @@ manager.terminate(worker['employee_id'], "completed")
 
 ```
 ~/.openclaw/
-├── workspace/                    # CyberMao (coordinator)
-│   ├── MEMORY.md                 # Core File (protected)
-│   ├── HEARTBEAT.md              # Core File (protected)
-│   └── .fis3.1/                  # FIS 3.1 extension
+├── workspace/                         # YOUR coordinator workspace
+│   ├── MEMORY.md                      # Core File (protected)
+│   ├── HEARTBEAT.md                   # Core File (protected)
+│   └── .fis3.1/                       # FIS 3.1 extension
 │       └── local_cache/
 │
-├── workspace-radar/              # Pulse (radar specialist)
+├── workspace-agent1/                  # YOUR agent 1 workspace
 │   ├── MEMORY.md
 │   ├── HEARTBEAT.md
 │   └── .fis3.1/
-│       ├── skill_manifest.json   # Skill manifest
+│       ├── skill_manifest.json        # YOUR skill manifest
 │       └── local_cache/
 │
-├── workspace-painter/            # Painter (visualization)
-├── workspace-formatter/          # Formatter (formatting)
-├── workspace-hardware/           # Hardware (hardware design)
+├── workspace-agent2/                  # YOUR agent 2 workspace
+│   └── ...
 │
-└── research-uav-gpr/             # Shared Hub
-    ├── .fis3.1/                  # FIS 3.1 shared infrastructure
-    │   ├── lib/                  # Python libraries
-    │   ├── memories/             # Shared memory
-    │   ├── skills/               # Skill registry
-    │   ├── heartbeat/            # Heartbeat status
-    │   └── experimental/         # Phase 2/3 preview
-    └── tickets/                  # Task tickets
+└── research-shared-hub/               # YOUR Shared Hub
+    ├── .fis3.1/                       # FIS 3.1 shared infrastructure
+    │   ├── lib/                       # Python libraries
+    │   ├── memories/                  # Shared memory
+    │   ├── skills/                    # Skill registry
+    │   ├── heartbeat/                 # Heartbeat status
+    │   └── experimental/              # Phase 2/3 framework
+    └── tickets/                       # Task tickets
         ├── active/
         ├── completed/
         └── archive/
@@ -225,7 +223,7 @@ manager.terminate(worker['employee_id'], "completed")
    - openclaw.json (main config)
 
 ✅ Only add to:
-   - research-uav-gpr/.fis3.1/ (shared infrastructure)
+   - research-shared-hub/.fis3.1/ (shared infrastructure)
    - workspace/.fis3.1/ (agent extension)
 ```
 
@@ -234,7 +232,7 @@ manager.terminate(worker['employee_id'], "completed")
 |-------|-------|-------------|
 | L1 Core Files | `*/MEMORY.md` | Agent-local only |
 | L2 Agent Workspace | `workspace-*/` | Agent-local only |
-| L3 Shared Hub | `research-uav-gpr/` | Controlled shared access |
+| L3 Shared Hub | `research-*/` | Controlled shared access |
 | L4 FIS Extension | `*/.fis3.1/` | Agent-independent |
 
 ### 3. File-First Architecture (纯文件机制)
@@ -267,25 +265,35 @@ This Skill contains system administration scripts for:
 
 Some antivirus software may flag automation scripts as suspicious. All code is open-source and auditable with no malicious behavior.
 
+**Operational Notes:**
+- SubAgent `terminate()` permanently deletes `workspace-subagent_{id}/` folders
+- Backup important data before initialization
+- Review `subagent_lifecycle.py` to confirm deletion scope
+
 ---
 
 ## Changelog
 
-### 2026-02-18: Phase 2/3 Staging
-- Moved knowledge graph and gating to `experimental/`
-- Kept P0 core streamlined
-- Added TOOLS.md quick reference
-- Published to ClawHub
+### 2026-02-18: v3.1.2 Generalization
+- Removed personal configuration examples
+- Removed unrelated utilities (tts_edge)
+- All examples now use generic placeholders
+- Added data isolation notice
+
+### 2026-02-18: Phase 2/3 Framework
+- Knowledge graph framework ready
+- Gating controller with RBAC
+- Retrieval orchestrator with access control
 
 ### 2026-02-17: FIS 3.1 Lite Initial Deploy
 - Deployed memory_manager, deadlock_detector, skill_registry
 - Deployed subagent_lifecycle + badge system
-- Registered 4 Pulse skills
+- Example skills registered
 
 ### 2026-02-17: Badge Image Generation
 - Added `generate_badge_image()` PNG generation
 - Batch support via `generate_multi_badge_image()`
-- WhatsApp/Feishu compatible layouts
+- Compatible badge layouts
 
 ### 2026-02-17: SubAgent Auto-Cleanup
 - `terminate()` auto-deletes workspace folders
