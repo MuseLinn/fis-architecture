@@ -1,9 +1,23 @@
 # FIS (Federal Intelligence System) Architecture Skill
 
-> **Version**: 3.2.2-lite  
+> **Version**: 3.2.3-lite  
 > **Name**: Federal Intelligence System (联邦智能系统)  
-> **Description**: OpenClaw lightweight multi-agent collaboration framework — FIS manages workflow, QMD manages content  
+> **Description**: File-based multi-agent workflow framework. Core: JSON tickets + Markdown knowledge (no Python required). Optional: Python helpers in `lib/` for badge generation. Integrates with OpenClaw QMD for semantic search.  
 > **Status**: ✅ Stable — Simplified architecture with QMD integration
+
+---
+
+## Before You Install
+
+**Core workflow**: Pure file-based (JSON tickets, Markdown). **No Python required for basic use.**
+
+**Optional components** (review before use):
+- `lib/*.py` — Badge generation helpers (require `pip install Pillow qrcode`)
+- `lib/fis_lifecycle.py` — CLI helpers for ticket management
+
+**Requires**: `mcporter` CLI for QMD search integration ([OpenClaw QMD docs](https://docs.openclaw.ai/concepts/memory))
+
+**Security**: Review Python scripts before execution. Core FIS works without them.
 
 ---
 
@@ -26,11 +40,10 @@
 ## What's New in 3.2.0
 
 ### Simplified Architecture
-- **Core functionality uses no Python** — pure file-based workflow (JSON tickets, Markdown knowledge)
-- **Optional Python tools** — badge generator and helpers in `lib/` (auditable, optional)
-- **Ticket system** — JSON files for task tracking
-- **QMD integration** — semantic search replaces custom registries
-- **Badge generator** — beautiful visual identity for subagents (v7+, requires Pillow)
+- **Core workflow**: File-based (JSON tickets, Markdown knowledge) — no Python required
+- **Optional helpers**: Python scripts in `lib/` for badge generation (auditable, optional)
+- **Official integration**: Uses OpenClaw QMD for semantic search — see https://docs.openclaw.ai/concepts/memory
+- **Badge generator**: Visual identity for subagents (requires Pillow, optional)
 
 ### Directory Structure
 
@@ -279,6 +292,13 @@ If you have FIS 3.1 components:
 ---
 
 ## Changelog
+
+### 2026-02-20: v3.2.3-lite Review Feedback
+- **Clarity**: Rewrote description to clearly distinguish core workflow (file-based) from optional Python helpers
+- **Documentation**: Added "Before You Install" section with security notes and component breakdown
+- **Metadata**: Added `mcporter` as required binary in skill.json
+- **Links**: Added official OpenClaw QMD documentation link (https://docs.openclaw.ai/concepts/memory)
+- **Fix**: Addressed "core uses no Python" vs "includes Python helpers" inconsistency
 
 ### 2026-02-20: v3.2.2-lite Security & Documentation Improvements
 - **Security**: Removed `archive/deprecated/` from published skill (kept in GitHub repo only)
