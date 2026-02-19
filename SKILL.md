@@ -351,12 +351,10 @@ If you have FIS 3.1 components:
 ├── QUICK_REFERENCE.md          # Quick command reference
 ├── AGENT_GUIDE.md              # Agent usage guide
 ├── lib/                        # Tools (not core)
-│   ├── badge_generator_v7.py   # ✅ Kept: Badge generation
-│   ├── fis_lifecycle.py        # ✅ Kept: Lifecycle helpers
-│   ├── fis_subagent_tool.py    # ✅ Kept: CLI helper
-│   ├── memory_manager.py       # ❌ Deprecated (QMD replaces)
-│   ├── skill_registry.py       # ❌ Deprecated (QMD replaces)
-│   └── deadlock_detector.py    # ❌ Deprecated
+│   ├── badge_generator_v7.py   # ✅ Badge generation
+│   ├── fis_lifecycle.py        # ✅ Lifecycle helpers
+│   ├── fis_subagent_tool.py    # ✅ CLI helper
+│   └── examples/               # Usage examples
 └── examples/                   # Usage examples
 ```
 

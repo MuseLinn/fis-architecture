@@ -33,26 +33,18 @@ fis-architecture/
 ├── REVIEW.md               # Review notes
 ├── package.json            # ClawHub metadata
 ├── lib/                    # Tools
-│   ├── badge_generator_v7.py      # ✅ Badge generation (kept)
+│   ├── badge_generator_v7.py      # ✅ Badge generation
 │   ├── badge_generator.py         # ✅ Legacy badge gen
 │   ├── badge_generator_ascii.py   # ✅ ASCII badge gen
-│   ├── badge_image_pil.py         # ✅ PIL utilities
 │   ├── badge_template.html        # ✅ HTML template
 │   ├── fis_lifecycle.py           # ✅ Lifecycle helpers
 │   ├── fis_subagent_tool.py       # ✅ CLI helper
+│   ├── fis_config.py              # ✅ Config utilities
 │   ├── multi_worker_demo.py       # ✅ Demo script
 │   ├── task_router.py             # ✅ Task routing
-│   └── fis_config.py              # ✅ Config utilities
-├── archive/                # Archived components
-│   └── deprecated/         # ⭐ FIS 3.1 deprecated files
-│       ├── README.md       # Migration guide
-│       ├── memory_manager.py
-│       ├── skill_registry.py
-│       ├── deadlock_detector.py
-│       └── fis_lifecycle.py
+│   └── ticket_manager.py          # ✅ Ticket management
+├── archive/                # Empty (legacy 3.1 in GitHub history only)
 └── examples/               # Usage examples
-    ├── init_fis31.py       # ⚠️ Legacy init (3.1 only)
-    ├── subagent_pipeline.py # ⚠️ Legacy pipeline
     └── generate_badges.py  # ✅ Badge generation demo
 ```
 

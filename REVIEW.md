@@ -56,10 +56,10 @@
 | 模块 | 状态 | 功能 |
 |------|------|------|
 | fis_lifecycle.py | ✅ | 生命周期 + 自动清理 + 超时检测 |
-| memory_manager.py | ✅ | 分层共享记忆 |
-| skill_registry.py | ✅ | 技能发现 |
-| deadlock_detector.py | ✅ | 死锁检测 |
-| badge_image_pil.py | ✅ | 工卡图片生成 |
+| badge_generator_v7.py | ✅ | 工卡图片生成 |
+| fis_subagent_tool.py | ✅ | CLI 工具辅助 |
+
+> **Note**: FIS 3.2 已移除 memory_manager.py, skill_registry.py, deadlock_detector.py (改用 QMD)
 
 ### 示例
 | 示例 | 状态 | 说明 |
