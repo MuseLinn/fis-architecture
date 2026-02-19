@@ -38,4 +38,4 @@ def set_shared_hub_name(name: str):
     DEFAULT_SHARED_HUB_NAME = name
 
 # For backward compatibility - will be deprecated
-LEGACY_SHARED_HUB = Path.home() / ".openclaw" / "research-uav-gpr"
+LEGACY_SHARED_HUB = Path.home() / ".openclaw" / "fis-hub"

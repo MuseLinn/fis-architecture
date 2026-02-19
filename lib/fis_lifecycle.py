@@ -14,7 +14,7 @@ from pathlib import Path
 
 # 路径配置
 WORKSPACE = Path.home() / ".openclaw" / "workspace"
-SHARED_HUB = Path.home() / ".openclaw" / "research-uav-gpr"
+SHARED_HUB = Path.home() / ".openclaw" / "fis-hub"
 BADGE_GENERATOR = WORKSPACE / "skills" / "fis-architecture" / "lib" / "badge_generator_v7.py"
 TICKETS_DIR = SHARED_HUB / "tickets"
 RESULTS_DIR = SHARED_HUB / "results"
