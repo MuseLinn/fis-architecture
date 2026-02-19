@@ -12,13 +12,16 @@ FIS 3.2 adopts a simplified architecture where **QMD (Query Model Direct)** hand
 | `skill_registry.py` | **SKILL.md + QMD** | QMD indexes SKILL.md files |
 | `deadlock_detector.py` | **Simple conventions** | Rarely needed; conventions suffice |
 | `subagent_lifecycle.py` | **Ticket files (JSON)** | Simpler, more transparent |
+| `init_fis31.py` | **Manual directory creation** | No init needed in 3.2 |
+| `setup_agent_extension.py` | **Not needed** | 3.2 has no extension system |
+| `subagent_pipeline.py` | **Native sessions_spawn** | Use OpenClaw's native spawning |
 
 ## Core Principle: FIS Manages Workflow, QMD Manages Content
 
 ```
 FIS 3.2:               FIS 3.1 (deprecated):
 tickets/               memories/ + skill_registry/
-(JSON files)           (Python classes)
+(JSON files)           (Python classes + registries)
      ↓                        ↓
   Workflow               Workflow + Content
 ```
@@ -72,6 +75,40 @@ EOF
 # Archive when done
 mv tickets/active/TASK_001.json tickets/completed/
 ```
+
+### Instead of init_fis31.py
+
+```bash
+# 3.2 needs no initialization — just create directories
+mkdir -p ~/.openclaw/my-project/{tickets/active,tickets/completed,knowledge}
+```
+
+### Instead of subagent_pipeline.py
+
+Use OpenClaw's native `sessions_spawn`:
+```python
+# OpenClaw native tool
+sessions_spawn(task="Your task", agentId="worker")
+```
+
+Or FIS 3.2 tickets:
+```bash
+# Create a ticket to track the spawned session
+echo '{"ticket_id":"TASK_001","openclaw_session":"sess_xxx","status":"active"}' > tickets/active/TASK_001.json
+```
+
+## File Manifest
+
+### Core Libraries (lib/)
+- `memory_manager.py` — Tiered memory system
+- `skill_registry.py` — Skill discovery & registration
+- `deadlock_detector.py` — DFS cycle detection
+- `subagent_lifecycle.py` — SubAgent lifecycle management
+
+### Examples (examples/)
+- `init_fis31.py` — Initialization script
+- `setup_agent_extension.py` — Agent extension setup
+- `subagent_pipeline.py` — 3-role pipeline demo
 
 ## Preserved for Reference
 
