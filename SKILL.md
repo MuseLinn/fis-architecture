@@ -1,6 +1,6 @@
 # FIS (Federal Intelligence System) Architecture Skill
 
-> **Version**: 3.2.4-lite  
+> **Version**: 3.2.5-lite  
 > **Name**: Federal Intelligence System (联邦智能系统)  
 > **Description**: File-based multi-agent workflow framework. Core: JSON tickets + Markdown knowledge (no Python required). Optional: Python helpers in `lib/` for badge generation. Integrates with OpenClaw QMD for semantic search.
 > 
@@ -294,6 +294,11 @@ If you have FIS 3.1 components:
 ---
 
 ## Changelog
+
+### 2026-02-20: v3.2.5-lite Fix Module Names & Uninstall Safety
+- **Fix**: Changed dangerous `rm -rf ~/.openclaw/fis-hub/` uninstall suggestion to safe skill-only removal
+- **Fix**: Updated all `subagent_lifecycle` references to `fis_lifecycle` for consistency
+- **Docs**: Added warning that fis-hub/ contains user data and is NOT removed by default
 
 ### 2026-02-20: v3.2.4-lite Remove Archive
 - **Security**: Completely removed `archive/` directory from release (legacy 3.1 components preserved in GitHub repo history only)

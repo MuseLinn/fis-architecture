@@ -49,7 +49,7 @@ fis-architecture/
 │       ├── memory_manager.py
 │       ├── skill_registry.py
 │       ├── deadlock_detector.py
-│       └── subagent_lifecycle.py
+│       └── fis_lifecycle.py
 └── examples/               # Usage examples
     ├── init_fis31.py       # ⚠️ Legacy init (3.1 only)
     ├── subagent_pipeline.py # ⚠️ Legacy pipeline
@@ -109,7 +109,7 @@ Breaking changes from 3.1:
 - memory_manager.py → Use QMD
 - skill_registry.py → Use SKILL.md + QMD
 - deadlock_detector.py → Use conventions
-- subagent_lifecycle.py → Use JSON tickets directly"
+- fis_lifecycle.py → Use JSON tickets directly"
 ```
 
 ### 3. Push to GitHub
@@ -159,7 +159,7 @@ git push origin v3.2.0-lite
 | memory_manager.py | QMD semantic search |
 | skill_registry.py | SKILL.md + QMD |
 | deadlock_detector.py | Simple conventions |
-| subagent_lifecycle.py | JSON tickets |
+| fis_lifecycle.py | JSON tickets |
 
 ### Migration
 See `archive/deprecated/README.md` for migration guide.

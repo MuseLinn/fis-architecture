@@ -55,7 +55,7 @@
 ### 核心库
 | 模块 | 状态 | 功能 |
 |------|------|------|
-| subagent_lifecycle.py | ✅ | 生命周期 + 自动清理 + 超时检测 |
+| fis_lifecycle.py | ✅ | 生命周期 + 自动清理 + 超时检测 |
 | memory_manager.py | ✅ | 分层共享记忆 |
 | skill_registry.py | ✅ | 技能发现 |
 | deadlock_detector.py | ✅ | 死锁检测 |
