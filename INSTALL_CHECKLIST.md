@@ -1,6 +1,18 @@
-# Installation Checklist - FIS 3.2.0-lite
+# Installation Checklist - FIS 3.2.2-lite
 
-> **Minimal installation — maximum clarity**
+> **Minimal installation — maximum clarity**  
+> **Security Notice**: Review all Python scripts in `lib/` before execution. Core FIS functionality requires no Python; Python tools are optional helpers.
+
+---
+
+## Security Checklist
+
+Before installing, audit the included files:
+
+- [ ] **Review `lib/` scripts** — Open and verify badge_generator_v7.py and other Python files don't perform unexpected writes or network calls
+- [ ] **Understand permissions** — Tickets can include `resources` fields (file_read, code_execute) that affect agent behavior; use with caution
+- [ ] **Optional Python tools** — Core FIS works without Python; only run lib/ scripts if you need badge generation
+- [ ] **Sandbox first** — Test in an isolated environment before production use
 
 ---
 

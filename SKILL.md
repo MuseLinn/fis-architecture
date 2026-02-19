@@ -1,6 +1,6 @@
 # FIS (Federal Intelligence System) Architecture Skill
 
-> **Version**: 3.2.1-lite  
+> **Version**: 3.2.2-lite  
 > **Name**: Federal Intelligence System (联邦智能系统)  
 > **Description**: OpenClaw lightweight multi-agent collaboration framework — FIS manages workflow, QMD manages content  
 > **Status**: ✅ Stable — Simplified architecture with QMD integration
@@ -26,10 +26,11 @@
 ## What's New in 3.2.0
 
 ### Simplified Architecture
-- **No Python dependencies** for core functionality — pure file-based workflow
-- **Ticket system only** — JSON files for task tracking
+- **Core functionality uses no Python** — pure file-based workflow (JSON tickets, Markdown knowledge)
+- **Optional Python tools** — badge generator and helpers in `lib/` (auditable, optional)
+- **Ticket system** — JSON files for task tracking
 - **QMD integration** — semantic search replaces custom registries
-- **Badge generator** — beautiful visual identity for subagents (v7+)
+- **Badge generator** — beautiful visual identity for subagents (v7+, requires Pillow)
 
 ### Directory Structure
 
@@ -67,11 +68,12 @@ cat > ~/.openclaw/fis-hub/tickets/active/TASK_EXAMPLE_001.json << 'EOF'
   "task": "Analyze GPR signal patterns",
   "status": "active",
   "created_at": "2026-02-19T21:00:00",
-  "timeout_minutes": 60,
-  "resources": ["file_read", "code_execute"]
+  "timeout_minutes": 60
 }
 EOF
 ```
+
+**Security Note**: The `resources` field (e.g., `["file_read", "code_execute"]`) can be added to tickets but should be used with caution. Only grant these permissions when necessary and audit all automated actions.
 
 ### 2. Generate Badge Image
 
@@ -277,6 +279,13 @@ If you have FIS 3.1 components:
 ---
 
 ## Changelog
+
+### 2026-02-20: v3.2.2-lite Security & Documentation Improvements
+- **Security**: Removed `archive/deprecated/` from published skill (kept in GitHub repo only)
+- **Documentation**: Clarified "Core functionality uses no Python" vs optional Python tools
+- **Documentation**: Added security warning about `resources` field in tickets
+- **Documentation**: Added Security Checklist to INSTALL_CHECKLIST.md
+- **Fix**: Corrected misleading "No Python dependencies" claim to "Core functionality uses no Python"
 
 ### 2026-02-20: v3.2.1-lite Documentation Improvements
 - Added: Troubleshooting section with common issues and solutions
