@@ -1,6 +1,6 @@
 # Security Considerations - FIS Architecture
 
-> **Version**: 3.2.6  
+> **Version**: 3.2.7  
 > **Last Updated**: 2026-02-20
 
 ## Overview

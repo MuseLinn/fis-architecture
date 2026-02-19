@@ -64,10 +64,8 @@
 ### 示例
 | 示例 | 状态 | 说明 |
 |------|------|------|
-| init_fis31.py | ✅ | 一键初始化 |
-| setup_agent_extension.py | ✅ | 单个 Agent 扩展 |
-| subagent_pipeline.py | ✅ | Worker-Reviewer 流水线 |
-| generate_badges.py | ✅ | 工卡生成演示 |
+| examples/generate_badges.py | ✅ | 工卡生成演示 |
+| lib/multi_worker_demo.py | ✅ | 多 Worker 流水线演示 |
 
 **完善度: 95%** ⭐⭐⭐⭐⭐
 
