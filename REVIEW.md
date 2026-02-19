@@ -21,7 +21,7 @@
 ├── workspace-radar/              # 专家 Agent
 │   └── .fis3.1/                 # 同样的分形结构
 │
-└── research-uav-gpr/.fis3.1/    # 共享中心
+└── fis-hub/.fis3.1/    # 共享中心
     ├── memories/                # 分层共享记忆
     └── skills/                  # 技能注册表
 ```

@@ -25,15 +25,15 @@ FIS 3.2 only needs:
 Check if your shared hub exists:
 
 ```bash
-ls ~/.openclaw/research-uav-gpr/tickets/
+ls ~/.openclaw/fis-hub/tickets/
 # Should show: active/  completed/
 ```
 
 If not, create the minimal structure:
 
 ```bash
-mkdir -p ~/.openclaw/research-uav-gpr/{tickets/active,tickets/completed,knowledge,results,.fis3.1}
-echo '{}' > ~/.openclaw/research-uav-gpr/.fis3.1/notifications.json
+mkdir -p ~/.openclaw/fis-hub/{tickets/active,tickets/completed,knowledge,results,.fis3.1}
+echo '{}' > ~/.openclaw/fis-hub/.fis3.1/notifications.json
 ```
 
 ---
@@ -42,7 +42,7 @@ echo '{}' > ~/.openclaw/research-uav-gpr/.fis3.1/notifications.json
 
 ```bash
 # Create a task ticket
-cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json << 'EOF'
+cat > ~/.openclaw/fis-hub/tickets/active/TASK_FIRST.json << 'EOF'
 {
   "ticket_id": "TASK_FIRST",
   "agent_id": "worker-001",
@@ -56,11 +56,11 @@ cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json << 'EOF'
 EOF
 
 # View it
-cat ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json
+cat ~/.openclaw/fis-hub/tickets/active/TASK_FIRST.json
 
 # Complete and archive
-mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json \
-   ~/.openclaw/research-uav-gpr/tickets/completed/
+mv ~/.openclaw/fis-hub/tickets/active/TASK_FIRST.json \
+   ~/.openclaw/fis-hub/tickets/completed/
 ```
 
 ✅ **That's it!** No Python imports, no registries, no setup.
@@ -88,7 +88,7 @@ Use **QMD** — it's already integrated with OpenClaw:
 mcporter call 'exa.web_search_exa(query: "your topic", numResults: 5)'
 
 # Or add knowledge
-echo "# My Knowledge" > ~/.openclaw/research-uav-gpr/knowledge/my-notes.md
+echo "# My Knowledge" > ~/.openclaw/fis-hub/knowledge/my-notes.md
 # QMD will index it automatically
 ```
 

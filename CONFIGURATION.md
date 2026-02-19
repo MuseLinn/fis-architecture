@@ -10,7 +10,7 @@ FIS 3.2 uses a simplified structure:
 
 ```
 ~/.openclaw/
-├── research-uav-gpr/             # Default Shared Hub
+├── fis-hub/             # Default Shared Hub
 │   ├── tickets/                  # Task workflow
 │   ├── knowledge/                # Shared knowledge (QMD-indexed)
 │   ├── results/                  # Research outputs
@@ -34,7 +34,7 @@ echo '{}' > ~/.openclaw/my-project/.fis3.1/notifications.json
 
 ```bash
 # Copy existing structure
-cp -r ~/.openclaw/research-uav-gpr ~/.openclaw/my-project
+cp -r ~/.openclaw/fis-hub ~/.openclaw/my-project
 
 # Clean up old data if needed
 rm -rf ~/.openclaw/my-project/tickets/completed/*
@@ -48,7 +48,7 @@ Create independent hubs for different projects:
 
 ```
 ~/.openclaw/
-├── research-uav-gpr/             # GPR research project
+├── fis-hub/             # GPR research project
 ├── product-dev/                  # Product development
 └── team-collaboration/           # Team workspace
 ```
@@ -85,7 +85,7 @@ Set a default hub in your shell:
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export FIS_SHARED_HUB="$HOME/.openclaw/research-uav-gpr"
+export FIS_SHARED_HUB="$HOME/.openclaw/fis-hub"
 ```
 
 Then reference it in scripts:

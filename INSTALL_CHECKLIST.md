@@ -9,7 +9,7 @@
 FIS 3.2 has a **simplified structure**:
 
 ```
-~/.openclaw/research-uav-gpr/           # Shared Hub (may already exist)
+~/.openclaw/fis-hub/           # Shared Hub (may already exist)
 ├── tickets/
 │   ├── active/                        # Active task tickets
 │   └── completed/                     # Archived tickets
@@ -47,12 +47,12 @@ Unlike FIS 3.1, **3.2 requires no initialization**:
 
 ## Optional: First-Time Setup
 
-If `research-uav-gpr/` doesn't exist:
+If `fis-hub/` doesn't exist:
 
 ```bash
 # Create minimal structure
-mkdir -p ~/.openclaw/research-uav-gpr/{tickets/active,tickets/completed,knowledge,results,.fis3.1}
-echo '{}' > ~/.openclaw/research-uav-gpr/.fis3.1/notifications.json
+mkdir -p ~/.openclaw/fis-hub/{tickets/active,tickets/completed,knowledge,results,.fis3.1}
+echo '{}' > ~/.openclaw/fis-hub/.fis3.1/notifications.json
 
 echo "✅ FIS 3.2 structure ready"
 ```
@@ -91,7 +91,7 @@ To remove FIS 3.2:
 rm -rf ~/.openclaw/workspace/skills/fis-architecture
 
 # Optional: Remove shared hub data
-rm -rf ~/.openclaw/research-uav-gpr/
+rm -rf ~/.openclaw/fis-hub/
 
 # Note: This does not affect OpenClaw core files
 ```
@@ -109,18 +109,18 @@ rm -rf ~/.openclaw/research-uav-gpr/
 
 ```bash
 # Verify structure
-ls ~/.openclaw/research-uav-gpr/tickets/
+ls ~/.openclaw/fis-hub/tickets/
 
 # Create test ticket
 echo '{"ticket_id":"TEST","status":"active"}' > \
-  ~/.openclaw/research-uav-gpr/tickets/active/TEST.json
+  ~/.openclaw/fis-hub/tickets/active/TEST.json
 
 # Verify
-cat ~/.openclaw/research-uav-gpr/tickets/active/TEST.json
+cat ~/.openclaw/fis-hub/tickets/active/TEST.json
 
 # Archive
-mv ~/.openclaw/research-uav-gpr/tickets/active/TEST.json \
-   ~/.openclaw/research-uav-gpr/tickets/completed/
+mv ~/.openclaw/fis-hub/tickets/active/TEST.json \
+   ~/.openclaw/fis-hub/tickets/completed/
 
 echo "✅ FIS 3.2 working correctly"
 ```

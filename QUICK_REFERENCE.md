@@ -5,7 +5,7 @@
 ### Create Task Ticket
 ```bash
 # Manual JSON file
-cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json << 'EOF'
+cat > ~/.openclaw/fis-hub/tickets/active/TASK_001.json << 'EOF'
 {
   "ticket_id": "TASK_001",
   "agent_id": "worker-001",
@@ -28,8 +28,8 @@ python3 badge_generator_v7.py
 
 ### Archive Completed Task
 ```bash
-mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json \
-   ~/.openclaw/research-uav-gpr/tickets/completed/
+mv ~/.openclaw/fis-hub/tickets/active/TASK_001.json \
+   ~/.openclaw/fis-hub/tickets/completed/
 ```
 
 ### Search Knowledge (QMD)
@@ -46,7 +46,7 @@ mcporter call 'exa.web_search_exa(query: "SKILL.md image processing", numResults
 ## Directory Structure
 
 ```
-research-uav-gpr/
+fis-hub/
 ├── tickets/
 │   ├── active/          # Active task tickets
 │   └── completed/       # Archived tickets

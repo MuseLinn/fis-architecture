@@ -50,7 +50,7 @@ Use SubAgent               Direct handling
 ### 1. Create Ticket
 
 ```bash
-cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json << 'EOF'
+cat > ~/.openclaw/fis-hub/tickets/active/TASK_001.json << 'EOF'
 {
   "ticket_id": "TASK_001",
   "agent_id": "worker-001",
@@ -76,8 +76,8 @@ python3 badge_generator_v7.py
 
 ```bash
 # When task is done
-mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json \
-   ~/.openclaw/research-uav-gpr/tickets/completed/
+mv ~/.openclaw/fis-hub/tickets/active/TASK_001.json \
+   ~/.openclaw/fis-hub/tickets/completed/
 ```
 
 ---

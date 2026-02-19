@@ -45,7 +45,7 @@ FIS provides **workflow orchestration** for AI agent collaboration:
 ### 1. Create a Task Ticket
 
 ```bash
-cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json << 'EOF'
+cat > ~/.openclaw/fis-hub/tickets/active/TASK_001.json << 'EOF'
 {
   "ticket_id": "TASK_001",
   "agent_id": "worker-001",
@@ -69,8 +69,8 @@ python3 badge_generator_v7.py
 ### 3. Archive When Done
 
 ```bash
-mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json \
-   ~/.openclaw/research-uav-gpr/tickets/completed/
+mv ~/.openclaw/fis-hub/tickets/active/TASK_001.json \
+   ~/.openclaw/fis-hub/tickets/completed/
 ```
 
 ---
@@ -78,7 +78,7 @@ mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json \
 ## Directory Structure
 
 ```
-research-uav-gpr/                    # Your shared hub
+fis-hub/                    # Your shared hub
 ├── tickets/                         # Task workflow
 │   ├── active/                      # Active tasks (JSON)
 │   └── completed/                   # Archived tasks

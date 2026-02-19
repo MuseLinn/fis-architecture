@@ -34,7 +34,7 @@
 ### Directory Structure
 
 ```
-research-uav-gpr/                    # Your shared hub
+fis-hub/                    # Your shared hub
 ├── 📁 tickets/                      # Task workflow (FIS core)
 │   ├── active/                      # Active tasks (JSON files)
 │   └── completed/                   # Archived tasks
@@ -58,7 +58,7 @@ research-uav-gpr/                    # Your shared hub
 
 ```bash
 # Create ticket manually or use helper
-cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_EXAMPLE_001.json << 'EOF'
+cat > ~/.openclaw/fis-hub/tickets/active/TASK_EXAMPLE_001.json << 'EOF'
 {
   "ticket_id": "TASK_EXAMPLE_001",
   "agent_id": "worker-001",
@@ -86,8 +86,8 @@ python3 badge_generator_v7.py
 
 ```bash
 # Move from active to completed
-mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_EXAMPLE_001.json \
-   ~/.openclaw/research-uav-gpr/tickets/completed/
+mv ~/.openclaw/fis-hub/tickets/active/TASK_EXAMPLE_001.json \
+   ~/.openclaw/fis-hub/tickets/completed/
 ```
 
 ---
