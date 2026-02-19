@@ -1,6 +1,6 @@
 {
   "name": "fis-architecture",
-  "version": "3.2.3-lite",
+  "version": "3.2.4-lite",
   "description": "Federal Intelligence System (FIS) 3.2 Lite - Simplified multi-agent workflow framework. FIS manages workflow, QMD manages content. File-based ticket system with badge generation.",
   "author": "CyberMao",
   "license": "MIT",

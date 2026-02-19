@@ -1,8 +1,10 @@
 # FIS (Federal Intelligence System) Architecture Skill
 
-> **Version**: 3.2.3-lite  
+> **Version**: 3.2.4-lite  
 > **Name**: Federal Intelligence System (联邦智能系统)  
-> **Description**: File-based multi-agent workflow framework. Core: JSON tickets + Markdown knowledge (no Python required). Optional: Python helpers in `lib/` for badge generation. Integrates with OpenClaw QMD for semantic search.  
+> **Description**: File-based multi-agent workflow framework. Core: JSON tickets + Markdown knowledge (no Python required). Optional: Python helpers in `lib/` for badge generation. Integrates with OpenClaw QMD for semantic search.
+> 
+> **Note**: Legacy FIS 3.1 components (memory_manager, skill_registry, etc.) are preserved in GitHub repo history but not included in this release. See repo for historical reference.  
 > **Status**: ✅ Stable — Simplified architecture with QMD integration
 
 ---
@@ -292,6 +294,10 @@ If you have FIS 3.1 components:
 ---
 
 ## Changelog
+
+### 2026-02-20: v3.2.4-lite Remove Archive
+- **Security**: Completely removed `archive/` directory from release (legacy 3.1 components preserved in GitHub repo history only)
+- **Documentation**: Added note about legacy components availability
 
 ### 2026-02-20: v3.2.3-lite Review Feedback
 - **Clarity**: Rewrote description to clearly distinguish core workflow (file-based) from optional Python helpers
