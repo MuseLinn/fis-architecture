@@ -115,19 +115,52 @@ mv ~/.openclaw/fis-hub/tickets/active/TASK_EXAMPLE_001.json \
 
 ```json
 {
-  "ticket_id": "TASK_CYBERMAO_20260219_001",
-  "agent_id": "worker-001",
+  "ticket_id": "TASK_FIS-UAV-002_20260220_002600",
+  "agent_id": "pulse",
   "parent": "cybermao",
   "role": "worker|reviewer|researcher|formatter",
-  "task": "Task description",
-  "status": "active|completed|timeout",
-  "created_at": "2026-02-19T21:00:00",
-  "completed_at": null,
-  "timeout_minutes": 60,
-  "resources": ["file_read", "file_write", "web_search"],
-  "output_dir": "results/TASK_001/"
+  "task": {
+    "description": "UAV-GPR 旋翼干扰机理分析 - 建立数学模型",
+    "created_at": "2026-02-20T00:30:00",
+    "deadline": "2026-02-27T09:00:00",
+    "status": "active"
+  },
+  "objective": "理解旋翼干扰的物理机制，建立可解释的数学模型",
+  "scope": {
+    "must_do": [
+      "分析旋翼叶片微多普勒产生的物理过程",
+      "建立旋翼-雷达几何关系数学模型"
+    ],
+    "must_not_do": [
+      "不要急于设计滤波器或抑制方法",
+      "不要跳过机理直接谈解决"
+    ]
+  },
+  "deliverables": [
+    "干扰机理分析报告 (Markdown)",
+    "时频分析图 (matplotlib)"
+  ],
+  "resources": ["file_read", "file_write", "code_execute", "web_search"],
+  "output_dir": "fis-hub/results/TASK_FIS-UAV-002/",
+  "notes": "关键问题：旋翼干扰是怎么产生的？"
 }
 ```
+
+### Field Descriptions
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `ticket_id` | string | ✅ | Unique identifier: `TASK_{agent}_{YYYYMMDD}_{seq}` |
+| `agent_id` | string | ✅ | Assigned agent (e.g., "pulse", "worker-001") |
+| `parent` | string | ✅ | Coordinating agent (e.g., "cybermao") |
+| `role` | enum | ✅ | `worker`, `reviewer`, `researcher`, `formatter` |
+| `task` | object | ✅ | `{description, created_at, deadline, status}` |
+| `objective` | string | ❌ | High-level goal of the task |
+| `scope` | object | ❌ | `{must_do[], must_not_do[]}` boundaries |
+| `deliverables` | array | ❌ | Expected outputs/deliverables |
+| `resources` | array | ❌ | Permissions: `file_read`, `file_write`, `code_execute`, `web_search` |
+| `output_dir` | string | ❌ | Where to save results |
+| `notes` | string | ❌ | Additional context or warnings |
 
 ---
 
