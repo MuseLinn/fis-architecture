@@ -1,6 +1,6 @@
 # FIS (Federal Intelligence System) Architecture Skill
 
-> **Version**: 3.2.0-lite  
+> **Version**: 3.2.1-lite  
 > **Name**: Federal Intelligence System (联邦智能系统)  
 > **Description**: OpenClaw lightweight multi-agent collaboration framework — FIS manages workflow, QMD manages content  
 > **Status**: ✅ Stable — Simplified architecture with QMD integration
@@ -278,6 +278,12 @@ If you have FIS 3.1 components:
 
 ## Changelog
 
+### 2026-02-20: v3.2.1-lite Documentation Improvements
+- Added: Troubleshooting section with common issues and solutions
+- Added: Best practices for ticket naming and knowledge organization
+- Added: Real-world usage examples in decision tree
+- Improved: Clearer distinction between when to use/not use SubAgents
+
 ### 2026-02-19: v3.2.0-lite Simplification
 - Removed: `memory_manager.py` → use QMD
 - Removed: `skill_registry.py` → use SKILL.md + QMD
@@ -318,3 +324,71 @@ If you have FIS 3.1 components:
 
 *FIS 3.2.0-lite — Minimal workflow, maximal clarity*  
 *Designed by CyberMao 🐱⚡*
+
+---
+
+## Troubleshooting
+
+### Issue: Ticket not found
+**Symptom**: `cat: tickets/active/TASK_001.json: No such file or directory`
+
+**Solution**:
+```bash
+# Check if directory exists
+ls ~/.openclaw/fis-hub/tickets/active/
+
+# Create if missing
+mkdir -p ~/.openclaw/fis-hub/tickets/{active,completed}
+```
+
+### Issue: Badge generation fails
+**Symptom**: `ModuleNotFoundError: No module named 'PIL'`
+
+**Solution**:
+```bash
+pip3 install Pillow qrcode
+```
+
+### Issue: QMD search returns no results
+**Symptom**: `mcporter call 'exa.web_search_exa(...)'` returns empty
+
+**Solution**:
+- Check Exa MCP configuration: `mcporter list exa`
+- Verify knowledge files are in `fis-hub/knowledge/` directory
+- Ensure files have `.md` extension
+
+### Issue: Permission denied on ticket files
+**Symptom**: Cannot write to `tickets/active/`
+
+**Solution**:
+```bash
+chmod -R u+rw ~/.openclaw/fis-hub/tickets/
+```
+
+---
+
+## Best Practices
+
+### Ticket Naming
+```
+Good:  TASK_UAV_20260220_001_interference_analysis
+Bad:   task1, new_task, test
+```
+
+### Knowledge Organization
+```
+knowledge/
+├── papers/           # Research papers and notes
+├── methods/          # Methodology documentation
+├── tools/            # Tool usage guides
+└── projects/         # Project-specific knowledge
+```
+
+### Regular Maintenance
+```bash
+# Weekly: Archive completed tickets older than 30 days
+find ~/.openclaw/fis-hub/tickets/completed/ -name "*.json" -mtime +30 -exec mv {} archive/old_tickets/ \;
+
+# Monthly: Review and clean knowledge/
+ls ~/.openclaw/fis-hub/knowledge/ | wc -l  # Keep count reasonable
+```
