@@ -11,7 +11,7 @@
 | Git repository | ✅ Initialized |
 | GitHub remote | ✅ Connected (MuseLinn/fis-architecture) |
 | Files updated | ✅ FIS 3.2 documentation |
-| Deprecated archived | ✅ Old components moved to `archive/deprecated/` |
+| Legacy components | ✅ Removed from release (preserved in GitHub history) |
 
 ---
 
@@ -61,7 +61,7 @@ fis-architecture/
 ## Pre-Release Checklist
 
 - [ ] All documentation updated to 3.2
-- [ ] Deprecated files moved to `archive/deprecated/`
+- [ ] Legacy components removed from release (preserved in GitHub history)
 - [ ] Version numbers updated in:
   - `skill.json`
   - `package.json`
@@ -162,7 +162,7 @@ git push origin v3.2.0-lite
 | fis_lifecycle.py | JSON tickets |
 
 ### Migration
-See `archive/deprecated/README.md` for migration guide.
+Legacy FIS 3.1 components are preserved in GitHub repo history for reference.
 
 ### Quick Start
 ```bash
