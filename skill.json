@@ -1,6 +1,6 @@
 {
   "name": "fis-architecture",
-  "version": "3.2.6",
+  "version": "3.2.7",
   "description": "Federal Intelligence System (FIS) 3.2 - File-based multi-agent workflow framework. FIS manages workflow (JSON tickets), QMD manages content. Optional Python helpers for badge generation.",
   "author": "CyberMao",
   "license": "MIT",
