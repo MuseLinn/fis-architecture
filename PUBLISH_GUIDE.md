@@ -1,137 +1,222 @@
-# 发布到 ClawHub 指南
+# Publish Guide - FIS 3.2.0-lite
 
-## 当前状态
+> **Publishing FIS to GitHub and ClawHub**
 
-✅ Git repo 已创建并提交  
-✅ 18 个文件已跟踪  
-✅ Repo 大小: 480K (干净)  
+---
 
-## 文件清单
+## Current Status
+
+| Item | Status |
+|------|--------|
+| Git repository | ✅ Initialized |
+| GitHub remote | ✅ Connected (MuseLinn/fis-architecture) |
+| Files updated | ✅ FIS 3.2 documentation |
+| Deprecated archived | ✅ Old components moved to `archive/deprecated/` |
+
+---
+
+## File Manifest
 
 ```
 fis-architecture/
-├── .gitignore              # Git 忽略规则
-├── skill.json              # Skill 元数据
-├── README.md               # 项目主页文档
-├── SKILL.md                # 完整架构文档
-├── QUICK_REFERENCE.md      # 快速参考
-├── INSTALL_CHECKLIST.md    # ⭐ 安装检查清单
-├── examples/               # 示例代码
-│   ├── init_fis31.py
-│   ├── subagent_pipeline.py
-│   └── generate_badges.py
-└── lib/                    # Python 库
-    ├── memory_manager.py
-    ├── deadlock_detector.py
-    ├── skill_registry.py
-    ├── subagent_lifecycle.py
-    ├── badge_image_pil.py
-    ├── badge_generator.py
-    └── badge_template.html
+├── .gitignore              # Git ignore rules
+├── skill.json              # Skill metadata
+├── README.md               # Project homepage
+├── SKILL.md                # Full documentation (⭐ updated to 3.2)
+├── QUICK_REFERENCE.md      # Quick command reference (⭐ updated)
+├── AGENT_GUIDE.md          # Agent usage guide (⭐ updated)
+├── CONFIGURATION.md        # Configuration guide (⭐ updated)
+├── POST_INSTALL.md         # Post-install setup (⭐ updated)
+├── INSTALL_CHECKLIST.md    # Installation checklist (⭐ updated)
+├── OPENCLAW_COMPATIBILITY.md # Compatibility notes (⭐ updated)
+├── PUBLISH_GUIDE.md        # This file
+├── REVIEW.md               # Review notes
+├── package.json            # ClawHub metadata
+├── lib/                    # Tools
+│   ├── badge_generator_v7.py      # ✅ Badge generation (kept)
+│   ├── badge_generator.py         # ✅ Legacy badge gen
+│   ├── badge_generator_ascii.py   # ✅ ASCII badge gen
+│   ├── badge_image_pil.py         # ✅ PIL utilities
+│   ├── badge_template.html        # ✅ HTML template
+│   ├── fis_lifecycle.py           # ✅ Lifecycle helpers
+│   ├── fis_subagent_tool.py       # ✅ CLI helper
+│   ├── multi_worker_demo.py       # ✅ Demo script
+│   ├── task_router.py             # ✅ Task routing
+│   └── fis_config.py              # ✅ Config utilities
+├── archive/                # Archived components
+│   └── deprecated/         # ⭐ FIS 3.1 deprecated files
+│       ├── README.md       # Migration guide
+│       ├── memory_manager.py
+│       ├── skill_registry.py
+│       ├── deadlock_detector.py
+│       └── subagent_lifecycle.py
+└── examples/               # Usage examples
+    ├── init_fis31.py       # ⚠️ Legacy init (3.1 only)
+    ├── subagent_pipeline.py # ⚠️ Legacy pipeline
+    └── generate_badges.py  # ✅ Badge generation demo
 ```
 
-## 发布步骤
+---
 
-### 1. 创建 GitHub 仓库
+## Pre-Release Checklist
+
+- [ ] All documentation updated to 3.2
+- [ ] Deprecated files moved to `archive/deprecated/`
+- [ ] Version numbers updated in:
+  - `skill.json`
+  - `package.json`
+  - All documentation headers
+- [ ] Git status clean (no uncommitted changes)
+- [ ] Test badge generation works
+
+---
+
+## Release Steps
+
+### 1. Update Version Numbers
 
 ```bash
-# 在 GitHub 创建新仓库: cybermao/fis-architecture
-# 然后推送本地代码
+# Edit skill.json
+{
+  "name": "fis-architecture",
+  "version": "3.2.0-lite",
+  ...
+}
 
-git remote add origin https://github.com/cybermao/fis-architecture.git
+# Edit package.json
+{
+  "version": "3.2.0-lite",
+  ...
+}
+```
+
+### 2. Commit Changes
+
+```bash
+cd ~/.openclaw/workspace/skills/fis-architecture
+
+git add -A
+git commit -m "feat: FIS 3.2.0-lite release
+
+Major changes:
+- Simplified architecture: FIS manages workflow, QMD manages content
+- Removed overlapping components (memory_manager, skill_registry, etc.)
+- Updated all documentation to 3.2
+- Archived deprecated files
+- Pure file-based ticket system (no Python setup required)
+
+Breaking changes from 3.1:
+- memory_manager.py → Use QMD
+- skill_registry.py → Use SKILL.md + QMD
+- deadlock_detector.py → Use conventions
+- subagent_lifecycle.py → Use JSON tickets directly"
+```
+
+### 3. Push to GitHub
+
+```bash
+# Ensure on main branch
 git branch -M main
-git push -u origin main
-```
 
-### 2. 创建 Release
+# Push commits
+git push origin main
 
-```bash
-# 打标签
-git tag -a v3.1.1 -m "FIS 3.1 Lite - Initial Release
+# Create release tag
+git tag -a v3.2.0-lite -m "FIS 3.2.0-lite - Simplified Architecture
+
+Core principle: FIS manages workflow, QMD manages content
 
 Features:
-- Fractal file system architecture
-- SubAgent lifecycle with auto-cleanup
-- Badge image generation (ticket style)
-- Installation checklist"
+- Pure file-based ticket system
+- QMD integration for content/search
+- Streamlined component set
+- Updated documentation"
 
-git push origin v3.1.1
+git push origin v3.2.0-lite
 ```
 
-### 3. 发布到 ClawHub
+### 4. Create GitHub Release
+
+1. Go to: https://github.com/MuseLinn/fis-architecture/releases
+2. Click "Create a new release"
+3. Choose tag: `v3.2.0-lite`
+4. Title: "FIS 3.2.0-lite — Simplified Architecture"
+5. Description:
+```markdown
+## FIS 3.2.0-lite
+
+**Core Principle: FIS manages workflow, QMD manages content**
+
+### What's New
+- Simplified file-based ticket system (JSON)
+- QMD integration replaces custom registries
+- Removed overlapping components
+- Updated documentation
+
+### Breaking Changes from 3.1
+| Component | Replacement |
+|-----------|-------------|
+| memory_manager.py | QMD semantic search |
+| skill_registry.py | SKILL.md + QMD |
+| deadlock_detector.py | Simple conventions |
+| subagent_lifecycle.py | JSON tickets |
+
+### Migration
+See `archive/deprecated/README.md` for migration guide.
+
+### Quick Start
+```bash
+mkdir -p tickets/active tickets/completed knowledge
+echo '{"ticket_id":"TEST","status":"active"}' > tickets/active/test.json
+```
+```
+
+### 5. Publish to ClawHub
 
 ```bash
-# 使用 clawhub CLI
+# Using clawhub CLI
 clawhub publish \
   --name fis-architecture \
-  --version 3.1.1 \
-  --description "FIS 3.1 Lite - Multi-agent collaboration framework" \
-  --tags "multi-agent,architecture,subagent,badge" \
-  --github https://github.com/cybermao/fis-architecture
+  --version 3.2.0-lite \
+  --description "FIS 3.2 Lite - Simplified multi-agent workflow framework" \
+  --tags "multi-agent,workflow,tickets,qmd" \
+  --github https://github.com/MuseLinn/fis-architecture
 ```
 
-或者手动上传:
-1. 访问 https://clawhub.com
-2. 点击 "Publish Skill"
-3. 填写信息:
+Or manually:
+1. Visit https://clawhub.com
+2. Click "Publish Skill"
+3. Fill in:
    - Name: `fis-architecture`
-   - Version: `3.1.1`
-   - Description: `Federal Intelligence System 3.1 Lite`
-   - GitHub URL: `https://github.com/cybermao/fis-architecture`
-4. 上传 `skill.json` 和 `README.md`
+   - Version: `3.2.0-lite`
+   - Description: `Federal Intelligence System 3.2 Lite`
+   - GitHub: `https://github.com/MuseLinn/fis-architecture`
 
-### 4. 验证发布
+---
 
-```bash
-# 搜索已发布的 skill
-clawhub search fis-architecture
-
-# 安装测试
-clawhub install fis-architecture
-```
-
-## 后续更新
-
-### 版本更新流程
+## Post-Release Verification
 
 ```bash
-# 1. 修改代码
-# ...
+# 1. Verify GitHub release
+curl -s https://api.github.com/repos/MuseLinn/fis-architecture/releases/latest | grep tag_name
 
-# 2. 更新版本号
-# 修改 skill.json 中的 version
+# 2. Test install (if published to ClawHub)
+clawhub install fis-architecture --version 3.2.0-lite
 
-# 3. 提交更改
-git add .
-git commit -m "Fix: xxx bug"
-
-# 4. 打新标签
-git tag -a v3.1.2 -m "Bug fixes"
-git push origin v3.1.2
-
-# 5. 更新 clawhub
-clawhub update fis-architecture --version 3.1.2
+# 3. Verify badge generation still works
+cd ~/.openclaw/workspace/skills/fis-architecture/lib
+python3 badge_generator_v7.py
 ```
 
-## 安装检查清单说明
+---
 
-**INSTALL_CHECKLIST.md** 是应知必知义务的核心：
+## Version History
 
-1. **预安装告知** - 列出所有文件夹改动
-2. **自动清理说明** - SubAgent 终止时自动删文件夹
-3. **数据安全提示** - Core Files 保护、Agent 隔离
-4. **卸载说明** - 完整的卸载步骤
-5. **确认清单** - 用户必须勾选确认理解
-
-这确保了用户在安装前完全了解系统将发生什么变化。
-
-## 下一步
-
-1. [ ] 创建 GitHub 仓库
-2. [ ] 推送代码
-3. [ ] 创建 v3.1.1 Release
-4. [ ] 发布到 ClawHub
-5. [ ] 分享 skill 链接
+| Version | Date | Notes |
+|---------|------|-------|
+| 3.2.0-lite | 2026-02-19 | Simplified architecture |
+| 3.1.3 | 2026-02-18 | Generalized release |
+| 3.1.0 | 2026-02-17 | Initial Lite release |
 
 ---
 

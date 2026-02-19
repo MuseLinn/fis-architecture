@@ -1,244 +1,191 @@
-# Agent Guide - FIS 3.1 Lite
+# Agent Guide - FIS 3.2.0-lite
 
-> **给 Agent 的使用指南**  
-> 当你被安装了 FIS Architecture skill，这份文档告诉你什么时候该用、怎么用。
-
----
-
-## ⚠️ 安装后必须先配置！
-
-**Skill 安装 ≠ 立即可用**
-
-安装完成后，必须运行初始化脚本：
-
-```bash
-cd ~/.openclaw/workspace/skills/fis-architecture
-python3 examples/init_fis31.py
-```
-
-这会创建：
-- 共享中心 `fis-hub/.fis3.1/`
-- 你的 Agent 扩展 `workspace/.fis3.1/`
-
-详见 [POST_INSTALL.md](./POST_INSTALL.md)
+> **For OpenClaw Agents using FIS Architecture**
 
 ---
 
-## 你获得了什么能力？
+## What You Get
 
-安装此 skill 后，你可以：
+FIS 3.2 provides **workflow management** for multi-agent collaboration:
 
-```python
-from lib.subagent_lifecycle import SubAgentLifecycleManager, SubAgentRole
-
-manager = SubAgentLifecycleManager("你的Agent名")
-
-# 1. 创建子代理
-card = manager.spawn(name="Worker-001", role=SubAgentRole.WORKER, task="...")
-
-# 2. 生成工卡图片
-image_path = manager.generate_badge_image(card['employee_id'])
-
-# 3. 检查超时
-expired = manager.check_expired(auto_terminate=True)
-```
+- **Ticket System**: JSON-based task tracking
+- **Badge Generator**: Visual identity for subagents
+- **QMD Integration**: Semantic search for knowledge
 
 ---
 
-## 决策树：什么时候用 SubAgent？
+## Decision Tree: When to Use SubAgent?
 
 ```
-用户请求
+User Request
     ↓
 ┌─────────────────────────────────────┐
-│ 1. 任务需要多个专业角色协作？         │
-│    (如: 程序员 + 审查员 + 测试员)    │
+│ 1. Needs multiple specialist roles? │
+│ 2. Duration > 10 minutes?           │
+│ 3. High failure impact?             │
+│ 4. Batch processing needed?         │
 └─────────────────────────────────────┘
-    ↓ 是                    ↓ 否
-    ↓              ┌─────────────────────┐
-    ↓              │ 2. 任务耗时 > 30分钟？│
-    ↓              │    (会阻塞主会话)     │
-    ↓              └─────────────────────┘
-    ↓                      ↓ 是      ↓ 否
-    ↓                      ↓  ┌─────────────────────┐
-    ↓                      ↓  │ 3. 任务失败影响大？  │
-    ↓                      ↓  │    (如: 生产环境)    │
-    ↓                      ↓  └─────────────────────┘
-    ↓                      ↓          ↓ 是    ↓ 否
-    ↓                      ↓          ↓       ↓
-┌──────────┐         ┌──────────┐  ┌──────────┐
-│ ✅ 用    │         │ ✅ 考虑用 │  │ ❌ 不用  │
-│ SubAgent │         │ SubAgent │  │ 直接处理 │
-└──────────┘         └──────────┘  └──────────┘
+    ↓ Any YES                  ↓ All NO
+Use SubAgent               Direct handling
 ```
 
 ---
 
-## 具体场景对照表
+## Quick Scenarios
 
-| 场景 | 用 SubAgent？ | 原因 |
-|------|--------------|------|
-| "查天气" | ❌ 否 | 简单查询，直接处理 |
-| "写个冒泡排序" | ❌ 否 | 简单代码，直接处理 |
-| "读文件并总结" | ❌ 否 | 单线任务，直接处理 |
-| "实现 PTVF 滤波算法 + 验证" | ✅ 是 | 需要 Worker + Reviewer 协作 |
-| "设计一套 UI 组件" | ✅ 是 | 需要 Designer 独立输出 |
-| "调研 + 实现 + 测试 完整功能" | ✅ 是 | 多阶段，可并行 |
-| "处理 1000 个文件" | ✅ 是 | 可分片并行处理 |
-| "紧急生产环境修复" | ✅ 是 | 失败影响大，需隔离 |
-
----
-
-## 反模式：别这样做！
-
-### ❌ 过度分解
-```python
-# 错误：为简单任务创建过多 SubAgent
-planner = manager.spawn(role=SubAgentRole.PLANNER, task="规划")
-worker = manager.spawn(role=SubAgentRole.WORKER, task="实现")
-reviewer = manager.spawn(role=SubAgentRole.REVIEWER, task="审查")
-
-# 用户只是想转换个文件格式...
-```
-
-### ❌ 不清理
-```python
-# 错误：创建了不终止
-worker = manager.spawn(...)
-# ... 任务完成 ...
-# 忘了 terminate() → 僵尸代理
-```
-
-### ❌ 不检查超时
-```python
-# 错误：不检查过期代理
-# 应该在 HEARTBEAT 中定期调用 check_expired()
-```
+| Scenario | Action | Reason |
+|----------|--------|--------|
+| "Check weather" | ❌ Direct | Quick lookup |
+| "Explain bubble sort" | ❌ Direct | Simple explanation |
+| "Summarize this file" | ❌ Direct | Single task |
+| "Implement + verify algorithm" | ✅ SubAgent | Worker + Reviewer |
+| "Design UI components" | ✅ SubAgent | Specialized work |
+| "Process 1000 files" | ✅ SubAgent | Batch + parallel |
+| "Research + implement" | ✅ SubAgent | Multi-phase |
 
 ---
 
-## 最佳实践模式
+## Creating a SubAgent
 
-### 模式 1：Worker-Reviewer 流水线
-```python
-# 适用：需要质量保证的代码/文档任务
+### 1. Create Ticket
 
-worker = manager.spawn(
-    name="实现者",
-    role=SubAgentRole.WORKER,
-    task="实现功能 X",
-    timeout_minutes=60
-)
-
-# 等待 Worker 完成
-# ...
-
-reviewer = manager.spawn(
-    name="审查者", 
-    role=SubAgentRole.REVIEWER,
-    task="审查功能 X 的实现",
-    timeout_minutes=30
-)
-
-# Reviewer 完成后
-manager.terminate(worker['employee_id'], "completed")
-manager.terminate(reviewer['employee_id'], "completed")
+```bash
+cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json << 'EOF'
+{
+  "ticket_id": "TASK_001",
+  "agent_id": "worker-001",
+  "parent": "cybermao",
+  "role": "worker",
+  "task": "Implement PTVF filter",
+  "status": "active",
+  "created_at": "2026-02-19T21:00:00",
+  "timeout_minutes": 60
+}
+EOF
 ```
 
-### 模式 2：研究-执行 分离
-```python
-# 适用：需要调研再执行的任务
+### 2. Generate Badge (Optional)
 
-researcher = manager.spawn(
-    name="研究员",
-    role=SubAgentRole.RESEARCHER,
-    task="调研最佳方案",
-    timeout_minutes=30
-)
-
-# 获取研究结果
-# ...
-
-worker = manager.spawn(
-    name="执行者",
-    role=SubAgentRole.WORKER,
-    task=f"按方案执行: {research_result}",
-    timeout_minutes=60
-)
+```bash
+cd ~/.openclaw/workspace/skills/fis-architecture/lib
+python3 badge_generator_v7.py
+# Follow interactive prompts
 ```
 
-### 模式 3：并行分片
-```python
-# 适用：大规模数据处理
+### 3. Complete and Archive
 
-tasks = ["处理文件1", "处理文件2", "处理文件3"]
-workers = []
-
-for i, task in enumerate(tasks):
-    worker = manager.spawn(
-        name=f"Worker-{i}",
-        role=SubAgentRole.WORKER,
-        task=task,
-        timeout_minutes=30
-    )
-    workers.append(worker)
-
-# 等待全部完成
-# ...
-
-# 批量清理
-for worker in workers:
-    manager.terminate(worker['employee_id'], "completed")
+```bash
+# When task is done
+mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json \
+   ~/.openclaw/research-uav-gpr/tickets/completed/
 ```
 
 ---
 
-## 在你的 HEARTBEAT 中添加
+## Workflow Patterns
+
+### Pattern 1: Worker → Reviewer
 
 ```python
-# ~/.openclaw/workspace/HEARTBEAT.md
-
-## FIS 3.1 Lite 维护
-```python
-import sys
-sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
-from subagent_lifecycle import SubAgentLifecycleManager
-
-manager = SubAgentLifecycleManager("你的Agent名")
-
-# 1. 检查并清理超时 SubAgent
-expired = manager.check_expired(auto_terminate=True)
-if expired:
-    print(f"⏰ Auto-terminated expired: {expired}")
-
-# 2. 报告活跃 SubAgent
-active = manager.list_active()
-if active:
-    print(f"🟢 Active SubAgents: {len(active)}")
-    for sa in active:
-        print(f"   - {sa['employee_id']}: {sa['task']['description'][:30]}...")
+# Pseudo-code workflow
+1. Create worker ticket
+2. Wait for completion
+3. Create reviewer ticket
+4. Reviewer checks output
+5. Archive both tickets
 ```
+
+### Pattern 2: Research → Execute
+
+```
+Researcher investigates options
+         ↓
+   Delivers findings
+         ↓
+Worker implements chosen approach
+         ↓
+   Delivers code
+```
+
+### Pattern 3: Parallel Sharding
+
+```
+Task split into 4 chunks
+         ↓
+Worker-1 → Worker-2 → Worker-3 → Worker-4
+         ↓
+   All complete
+         ↓
+Aggregator combines results
 ```
 
 ---
 
-## 快速检查清单
+## Anti-Patterns: Don't Do This!
 
-创建 SubAgent 前问自己：
+### ❌ Over-decomposition
+```python
+# Bad: Creating agents for trivial tasks
+planner = create_agent("plan")
+worker = create_agent("implement")
+reviewer = create_agent("review")
+# User just wanted to convert a file!
+```
 
-- [ ] 这个任务**必须**多个角色协作吗？
-- [ ] 这个任务会**阻塞用户**超过 30 分钟吗？
-- [ ] 这个任务失败会造成**严重后果**吗？
-- [ ] 我有明确的**终止计划**吗？
+### ❌ No Cleanup
+```python
+# Bad: Leaving tickets in active/ forever
+# Always archive completed tasks
+```
 
-如果 4 个都选 "否" → **直接处理，别用 SubAgent**
+### ❌ Wrong Role
+```python
+# Bad: Using researcher for implementation
+# Match role to actual need
+```
 
 ---
 
-## 记住
+## Best Practices
 
-> **FIS 是工具，不是拐杖。**  
-> 简单任务直接做，复杂任务才协作。  
-> 不要为了用工具而用工具。
+### ✅ Check Before Creating
+- [ ] Is this too complex for direct handling?
+- [ ] Do I have a clear completion criteria?
+- [ ] Can I archive this when done?
 
-*FIS 3.1 Lite - 质胜于量 🐱⚡*
+### ✅ Use Correct Role
+- **worker**: Implementation, execution
+- **reviewer**: Quality assurance
+- **researcher**: Investigation, analysis
+- **formatter**: Conversion, cleanup
+
+### ✅ Keep Tickets Tidy
+- Archive completed tasks promptly
+- Use descriptive ticket IDs
+- Include timeout estimates
+
+---
+
+## Knowledge Management (QMD)
+
+**Don't use custom registries — use QMD:**
+
+```bash
+# Search for existing knowledge
+mcporter call 'exa.web_search_exa(query: "GPR VMD decomposition", numResults: 5)'
+
+# Find relevant skills
+mcporter call 'exa.web_search_exa(query: "SKILL.md image generation", numResults: 5)'
+```
+
+**Add knowledge**: Drop Markdown files into `knowledge/` directories.
+
+---
+
+## Remember
+
+> **FIS is for workflow, not content.**  
+> Use Tickets for process, QMD for knowledge.  
+> Simple tasks = direct handling.  > Complex workflows = SubAgents.
+
+*FIS 3.2.0-lite — Minimal workflow, maximal clarity 🐱⚡*

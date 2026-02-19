@@ -1,191 +1,156 @@
-# OpenClaw Compatibility - FIS 3.1 Lite
+# OpenClaw Compatibility - FIS 3.2.0-lite
 
-> **FIS 与 OpenClaw 版本兼容性追踪**
-
----
-
-## 当前状态
-
-| OpenClaw 版本 | FIS 版本 | 兼容性 | 备注 |
-|--------------|----------|--------|------|
-| 2026.2.15 | 3.1.3 | ✅ 完全兼容 | 最新 |
-| 2026.2.14 | 3.1.0 | ✅ 兼容 | Gateway 修复 |
-| 2026.2.12 | 3.0.x | ⚠️ 有已知问题 | 路径死锁 |
+> **FIS works with all OpenClaw versions supporting file operations**
 
 ---
 
-## OpenClaw 2026.2.15 新特性与 FIS
+## Current Status
 
-### 1. 嵌套 SubAgent (Nested Sub-Agents) 🆕
+| OpenClaw Version | FIS Version | Compatibility | Notes |
+|-----------------|-------------|---------------|-------|
+| 2026.2.15+ | 3.2.0-lite | ✅ Fully Compatible | Simplified architecture |
+| 2026.2.15 | 3.1.3 | ✅ Compatible | Legacy |
+| 2026.2.12 | 3.0.x | ⚠️ Deprecated | Upgrade recommended |
 
-**OpenClaw 更新:**
-```yaml
-# config.yaml
-agents:
-  defaults:
-    subagents:
-      maxSpawnDepth: 2      # 允许子代理创建孙代理
-      maxChildrenPerAgent: 5 # 每个代理最多5个子代理
-```
+---
 
-**FIS 当前设计:**
-```python
-# subagent_lifecycle.py
-"permissions": {
-    "can_create_subagent": False,  # FIS 默认禁止
+## What's New in 3.2.0
+
+### Simplified Architecture
+
+**FIS 3.2** removes components that overlapped with QMD:
+
+| Feature | FIS 3.1 | FIS 3.2 | Handler |
+|---------|---------|---------|---------|
+| Task Management | Python API | **JSON files** | FIS |
+| Memory/Search | memory_manager.py | **QMD** | QMD |
+| Skill Discovery | skill_registry.py | **SKILL.md + QMD** | QMD |
+| Knowledge Graph | experimental/kg/ | **QMD** | QMD |
+| Badge Generation | ✅ Python | ✅ Python | FIS |
+
+### Benefits
+
+- ✅ **No Python setup required** for core functionality
+- ✅ **File-first** — tickets are simple JSON
+- ✅ **QMD integration** — semantic search built-in
+- ✅ **Git-friendly** — all files are text
+
+---
+
+## Compatibility with OpenClaw Features
+
+### 1. Nested SubAgents (2026.2.15+)
+
+**Status:** ✅ Compatible
+
+FIS 3.2 ticket system works with OpenClaw's native nesting:
+
+```json
+{
+  "ticket_id": "TASK_PARENT",
+  "child_tickets": ["TASK_CHILD_1", "TASK_CHILD_2"]
 }
 ```
 
-**兼容性:** ✅ **完全兼容，可选择性启用**
+### 2. Sessions Spawn (Native)
 
-FIS 设计时就考虑了权限控制，现在可以开放嵌套：
+**Status:** ✅ Recommended over FIS subagents
+
+For new projects, consider OpenClaw's native `sessions_spawn`:
 
 ```python
-# 允许特定 SubAgent 创建子代理
-special_worker = manager.spawn(
-    name="高级Worker",
-    role=SubAgentRole.WORKER,
-    task="复杂分解任务",
-    permissions_override={
-        "can_create_subagent": True  # 启用嵌套
-    }
+# OpenClaw native
+sessions_spawn(
+    task="Research task",
+    agentId="researcher"
 )
 ```
 
-**使用场景:**
-- 复杂任务需要多级分解
-- 树形任务结构
-- 递归处理
+FIS tickets can track these native spawns:
 
----
-
-### 2. Discord Components v2 🆕
-
-**OpenClaw 更新:**
-- Buttons, Selects, Modals
-- Attachment-backed file blocks
-
-**FIS 应用:**
-```python
-# 工卡可以显示为 Discord 交互式卡片
-# 按钮: "查看详情", "终止任务", "查看日志"
-# 下拉菜单: 选择操作
+```json
+{
+  "ticket_id": "TASK_001",
+  "openclaw_session": "sess_abc123",
+  "status": "active"
+}
 ```
 
-**兼容性:** ✅ **可扩展，非必需**
+### 3. Memory Search (QMD)
 
-未来可添加 `badge_discord_interactive.py` 模块。
+**Status:** ✅ Primary content retrieval
 
----
+Use OpenClaw's memory search instead of custom registries:
 
-### 3. Plugin Hooks (llm_input / llm_output) 🆕
-
-**OpenClaw 更新:**
-```python
-# 扩展可以监控 LLM 调用
-@hook.llm_input
-def monitor_input(payload):
-    pass
-
-@hook.llm_output
-def monitor_output(payload):
-    pass
 ```
+# Native OpenClaw
+Search my memory for GPR signal processing info...
 
-**FIS 应用:**
-```python
-# 监控 SubAgent 的 LLM 使用情况
-# 统计 token 消耗
-# 审计 prompt 内容
-```
-
-**兼容性:** ✅ **可扩展，非必需**
-
-可添加 `llm_monitor.py` 模块到 FIS。
-
----
-
-## FIS 优势（相对于原生嵌套 SubAgent）
-
-| 特性 | OpenClaw 原生 | FIS 3.1 Lite |
-|------|--------------|--------------|
-| 嵌套深度 | 可配置 | 可配置 + 权限控制 |
-| 生命周期 | 基础 | 完整 (工卡 + 自动清理) |
-| 死锁检测 | ❌ | ✅ |
-| 票据管理 | ❌ | ✅ |
-| 技能注册 | ❌ | ✅ |
-| 工卡生成 | ❌ | ✅ |
-| 共享记忆 | ❌ | ✅ |
-
-**结论:** FIS 在原生嵌套 SubAgent 基础上提供了**完整的企业级管理**。
-
----
-
-## 适配计划
-
-### 立即可用 (No changes needed)
-- ✅ FIS 3.1.3 在 OpenClaw 2026.2.15 上完全可用
-- ✅ 所有功能正常工作
-
-### 可选增强 (Future releases)
-
-**v3.2.0 (计划):**
-- [ ] 支持嵌套 SubAgent 权限配置
-- [ ] 树形 SubAgent 结构可视化
-- [ ] Discord 交互式工卡
-- [ ] LLM 使用监控集成
-
----
-
-## 升级建议
-
-**如果你使用 OpenClaw 2026.2.15:**
-
-1. **立即:** FIS 3.1.3 完全可用，无需更改
-2. **可选:** 考虑启用嵌套 SubAgent 权限（高级场景）
-3. **等待:** FIS 3.2.0 将带来原生嵌套集成
-
-**配置示例（启用嵌套）:**
-
-```python
-# 在 AGENT_GUIDE.md 中添加
-"""
-## 嵌套 SubAgent (OpenClaw 2026.2.15+)
-
-对于需要多级分解的复杂任务：
-
-```python
-# 创建可以创建子代理的特殊 Worker
-architect = manager.spawn(
-    name="架构师",
-    role=SubAgentRole.PLANNER,
-    task="分解大型项目",
-    permissions_override={
-        "can_create_subagent": True,
-        "max_subagent_depth": 2  # 最多2层
-    }
-)
-
-# Architect 可以创建 Workers
-# Workers 不能创建子代理（默认）
-```
-
-注意：嵌套会增加复杂度，仅在必要时使用。
-"""
+# Or via QMD
+mcporter call 'exa.web_search_exa(query: "GPR signal", numResults: 5)'
 ```
 
 ---
 
-## 总结
+## Migration from FIS 3.1
 
-✅ **FIS 3.1 Lite 完全适配 OpenClaw 2026.2.15**  
-✅ **FIS 提供比原生嵌套更完善的管理**  
-✅ **可选择性启用新特性**  
+If using FIS 3.1 components:
 
-FIS 架构的前瞻性设计使其能够**优雅适应** OpenClaw 的演进。
+| Old Component | New Approach |
+|--------------|--------------|
+| `memory_manager.py` | Use QMD / OpenClaw memory search |
+| `skill_registry.py` | Use SKILL.md + QMD |
+| `deadlock_detector.py` | Set `timeout_minutes` in tickets |
+| `subagent_lifecycle.py` | Use JSON tickets directly |
+
+**Archived in:** `archive/deprecated/`
 
 ---
 
-*Last updated: 2026-02-18*  
-*OpenClaw version: 2026.2.15*  
-*FIS version: 3.1.3*
+## Recommended Setup
+
+### For New Projects
+
+```bash
+# 1. Create minimal structure
+mkdir -p ~/.openclaw/my-project/{tickets/active,tickets/completed,knowledge}
+
+# 2. Create tickets as JSON files
+# 3. Use QMD for content/search
+# 4. Use OpenClaw native sessions_spawn for subagents
+```
+
+### For Existing FIS 3.1 Projects
+
+1. Keep existing tickets (format unchanged)
+2. Migrate to QMD for queries
+3. Archive old Python components
+4. Continue using badge generator if desired
+
+---
+
+## Version Matrix
+
+| FIS Version | OpenClaw Min | Status |
+|-------------|--------------|--------|
+| 3.2.0-lite | 2026.2.15 | ✅ Current |
+| 3.1.3 | 2026.2.15 | ⚠️ Legacy |
+| 3.0.x | 2026.2.12 | ❌ Deprecated |
+
+---
+
+## Future Roadmap
+
+### 3.2.x (Planned)
+- [ ] Discord interactive badges
+- [ ] Enhanced ticket templates
+- [ ] Native session tracking
+
+### 3.3.0 (Future)
+- [ ] Web UI for ticket management
+- [ ] Real-time collaboration
+- [ ] Integration with OpenClaw dashboard
+
+---
+
+*FIS 3.2.0-lite — Evolving with OpenClaw 🐱⚡*

@@ -1,124 +1,117 @@
 # Post-Installation Setup
 
-> **⚠️ 重要：安装 Skill 后必须手动完成配置！**
-
-## 安装 ≠ 配置完成
-
-安装本 Skill 只是将代码放到你的 `workspace/skills/` 目录。
-
-**必须手动运行初始化脚本** 来创建 FIS 3.1 架构所需的目录结构。
+> **FIS 3.2 is ready to use immediately — no complex setup required!**
 
 ---
 
-## 配置步骤
+## What's Different in 3.2?
 
-### Step 1: 阅读安装检查清单
+**FIS 3.2 requires no initialization.**
+
+Unlike FIS 3.1 which needed:
+- ❌ Initialization scripts
+- ❌ Registry files
+- ❌ Python path setup
+- ❌ Complex directory structures
+
+FIS 3.2 only needs:
+- ✅ Ticket files (create as needed)
+- ✅ Knowledge files (drop into `knowledge/`)
+
+---
+
+## Quick Verification
+
+Check if your shared hub exists:
 
 ```bash
-cat ~/.openclaw/workspace/skills/fis-architecture/INSTALL_CHECKLIST.md
+ls ~/.openclaw/research-uav-gpr/tickets/
+# Should show: active/  completed/
 ```
 
-确认你理解：
-- ✅ 将创建哪些文件夹
-- ✅ 自动清理行为
-- ✅ 数据安全措施
-
-### Step 2: 运行初始化脚本
+If not, create the minimal structure:
 
 ```bash
-cd ~/.openclaw/workspace/skills/fis-architecture
-python3 examples/init_fis31.py
+mkdir -p ~/.openclaw/research-uav-gpr/{tickets/active,tickets/completed,knowledge,results,.fis3.1}
+echo '{}' > ~/.openclaw/research-uav-gpr/.fis3.1/notifications.json
 ```
 
-这个脚本会：
-1. **创建共享中心** `fis-hub/.fis3.1/`
-   - memories/ (分层共享记忆)
-   - skills/ (技能注册表)
-   - lib/ (Python 库)
-   - heartbeat/
-   - subagent_registry.json
+---
 
-2. **创建 Agent 分形扩展** `workspace/.fis3.1/`
-   - local_cache/
-   - skill_manifest.json
-
-### Step 3: 验证配置
+## Your First Ticket
 
 ```bash
-# 检查共享中心
-ls ~/.openclaw/fis-hub/.fis3.1/
+# Create a task ticket
+cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json << 'EOF'
+{
+  "ticket_id": "TASK_FIRST",
+  "agent_id": "worker-001",
+  "parent": "cybermao",
+  "role": "worker",
+  "task": "My first FIS task",
+  "status": "active",
+  "created_at": "2026-02-19T21:00:00",
+  "timeout_minutes": 60
+}
+EOF
 
-# 检查 Agent 扩展
-ls ~/.openclaw/workspace/.fis3.1/
+# View it
+cat ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json
 
-# 测试导入
-python3 -c "
-import sys
-sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
-from subagent_lifecycle import SubAgentLifecycleManager
-print('✅ FIS 3.1 configured successfully')
-"
+# Complete and archive
+mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_FIRST.json \
+   ~/.openclaw/research-uav-gpr/tickets/completed/
 ```
+
+✅ **That's it!** No Python imports, no registries, no setup.
 
 ---
 
-## 如果没有配置会怎样？
+## Optional: Generate Badge
 
-**错误示例**:
-```python
-from lib.subagent_lifecycle import SubAgentLifecycleManager
-# ❌ ModuleNotFoundError: No module named 'lib'
-
-# 或者
-manager = SubAgentLifecycleManager("cybermao")
-# ❌ FileNotFoundError: subagent_registry.json not found
-```
-
-**解决**: 运行 `python3 examples/init_fis31.py`
-
----
-
-## 为多个 Agent 配置
-
-如果你有多个 Agent (如 pulse, painter):
+For visual identity:
 
 ```bash
-# 为每个 Agent 创建扩展
-python3 examples/setup_agent_extension.py cybermao
-python3 examples/setup_agent_extension.py pulse
-python3 examples/setup_agent_extension.py painter
+cd ~/.openclaw/workspace/skills/fis-architecture/lib
+python3 badge_generator_v7.py
+# Follow prompts
 ```
 
 ---
 
-## 配置后检查清单
+## What About Content/Knowledge?
 
-- [ ] 共享中心已创建: `fis-hub/.fis3.1/`
-- [ ] Agent 扩展已创建: `workspace/.fis3.1/`
-- [ ] 可以导入 `subagent_lifecycle`
-- [ ] 可以创建 SubAgent
-- [ ] 已阅读 AGENT_GUIDE.md
+Use **QMD** — it's already integrated with OpenClaw:
 
----
+```bash
+# Search for knowledge
+mcporter call 'exa.web_search_exa(query: "your topic", numResults: 5)'
 
-## 故障排除
-
-### 问题: "No module named 'lib'"
-**原因**: Python 找不到 FIS 库路径
-**解决**:
-```python
-import sys
-sys.path.insert(0, '/home/muselinn/.openclaw/fis-hub/.fis3.1/lib')
+# Or add knowledge
+echo "# My Knowledge" > ~/.openclaw/research-uav-gpr/knowledge/my-notes.md
+# QMD will index it automatically
 ```
 
-### 问题: "subagent_registry.json not found"
-**原因**: 未运行初始化脚本
-**解决**: `python3 examples/init_fis31.py`
+---
 
-### 问题: "Permission denied"
-**原因**: 目录权限问题
-**解决**: `chmod -R u+rw ~/.openclaw/`
+## No Configuration Needed
+
+| Feature | FIS 3.1 | FIS 3.2 |
+|---------|---------|---------|
+| Setup | `python3 init_fis31.py` | None |
+| Registry files | Required | Not needed |
+| Python imports | Required | Optional |
+| Skill discovery | Custom registry | QMD |
+| Memory queries | Custom manager | QMD |
 
 ---
 
-*配置完成后，别忘了阅读 [AGENT_GUIDE.md](./AGENT_GUIDE.md) 学习如何正确使用 SubAgent！*
+## Next Steps
+
+- Read [AGENT_GUIDE.md](./AGENT_GUIDE.md) — When to use SubAgents
+- Read [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) — Command cheat sheet
+- Create your first real ticket
+
+---
+
+*FIS 3.2.0-lite — Ready when you are 🐱⚡*

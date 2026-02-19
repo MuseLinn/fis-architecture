@@ -1,213 +1,138 @@
-# FIS 3.1 Lite - Quick Reference
+# FIS 3.2.0-lite - Quick Reference
 
-## Quick Commands (快速命令)
+## Quick Commands
 
-### Initialize Environment (初始化环境)
+### Create Task Ticket
 ```bash
-python3 ~/.openclaw/workspace/skills/fis-architecture/examples/init_fis31.py
+# Manual JSON file
+cat > ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json << 'EOF'
+{
+  "ticket_id": "TASK_001",
+  "agent_id": "worker-001",
+  "parent": "cybermao",
+  "role": "worker",
+  "task": "Task description",
+  "status": "active",
+  "created_at": "2026-02-19T21:00:00",
+  "timeout_minutes": 60
+}
+EOF
 ```
 
-### Run 3-Role Pipeline Demo (运行三角色流水线示例)
+### Generate Badge
 ```bash
-python3 ~/.openclaw/workspace/skills/fis-architecture/examples/subagent_pipeline.py
+cd ~/.openclaw/workspace/skills/fis-architecture/lib
+python3 badge_generator_v7.py
+# Output: ~/.openclaw/output/badges/
 ```
 
----
-
-## Python API
-
-### 1. Shared Memory (共享记忆)
-```python
-from memory_manager import write_memory, query_memory
-
-# Write (写入)
-write_memory(
-    agent="pulse",
-    content={"key": "value"},
-    layer="short_term",  # working/short_term/long_term
-    tags=["gpr", "task-001"]
-)
-
-# Query (查询)
-results = query_memory(
-    query="gpr",
-    agent_filter=["pulse"],
-    limit=10
-)
-```
-
-### 2. Deadlock Detection (死锁检测)
-```python
-from deadlock_detector import check_and_resolve
-
-report = check_and_resolve(auto_resolve=False)
-if report["deadlock_found"]:
-    print(f"Deadlocks: {report['deadlocks']}")
-```
-
-### 3. Skill Registry (技能注册)
-```python
-from skill_registry import register_skills, discover_skills
-
-# Register (注册)
-with open('skill_manifest.json') as f:
-    manifest = json.load(f)
-register_skills("pulse", manifest)
-
-# Discover (发现)
-skills = discover_skills(query="SFCW")
-```
-
-### 4. SubAgent Lifecycle (子代理生命周期)
-```python
-from subagent_lifecycle import SubAgentLifecycleManager, SubAgentRole
-
-manager = SubAgentLifecycleManager("cybermao")
-
-# Create / Issue Badge (创建/发工卡)
-card = manager.spawn(
-    name="Worker-001",
-    role=SubAgentRole.WORKER,  # WORKER/REVIEWER/RESEARCHER/FORMATTER
-    task_description="Task details...",
-    timeout_minutes=120,
-    resources=["file_read", "file_write"]
-)
-
-# Activate (激活)
-manager.activate(card['employee_id'])
-
-# Display Badge (显示工卡)
-print(manager.generate_badge(card['employee_id']))
-
-# Heartbeat (心跳)
-manager.heartbeat(card['employee_id'])
-
-# Terminate (终止)
-manager.terminate(card['employee_id'], "completed")
-
-# List Active (列表)
-active = manager.list_active()
-```
-
----
-
-## Badge ID Format (工号格式)
-
-```
-{PARENT}-SA-{YYYY}-{NNNN}
-
-Examples:
-- CYBERMAO-SA-2026-0001
-- PULSE-SA-2026-0001
-```
-
----
-
-## Directory Structure (目录结构)
-
-```
-~/.openclaw/
-├── research-uav-gpr/.fis3.1/     # Shared Infrastructure (共享基础设施)
-│   ├── memories/{working,short_term,long_term}/
-│   ├── skills/{registry.json,manifests/}
-│   ├── lib/{*.py}
-│   └── subagent_registry.json
-│
-├── workspace/.fis3.1/            # CyberMao Extension
-├── workspace-radar/.fis3.1/      # Pulse Extension
-│   └── skill_manifest.json
-│
-└── workspace-subagent_*/         # SubAgent Workspaces (子代理工作区)
-    ├── AGENTS.md
-    ├── TODO.md
-    └── EMPLOYEE_CARD.json
-```
-
----
-
-## Design Principles (设计原则)
-
-1. **Zero Core File Pollution (零污染 Core Files)**: Never modify other agents' MEMORY.md/HEARTBEAT.md
-2. **File-First Architecture (纯文件机制)**: No services/databases, JSON + Python only
-3. **Layered Permissions (分层权限)**: SubAgents access external resources only through parent
-4. **Badge System (工卡系统)**: Elegant identity management with permission matrix
-
----
-
-## Troubleshooting (故障排查)
-
-### Check Registries (检查注册表)
+### Archive Completed Task
 ```bash
-cat ~/.openclaw/research-uav-gpr/.fis3.1/skills/registry.json
-cat ~/.openclaw/research-uav-gpr/.fis3.1/subagent_registry.json
+mv ~/.openclaw/research-uav-gpr/tickets/active/TASK_001.json \
+   ~/.openclaw/research-uav-gpr/tickets/completed/
 ```
 
-### Check SubAgent Workspaces (检查子代理工作区)
+### Search Knowledge (QMD)
 ```bash
-ls ~/.openclaw/workspace-subagent_*
-```
+# Semantic search
+mcporter call 'exa.web_search_exa(query: "GPR signal processing", numResults: 5)'
 
-### Run Maintenance (运行维护脚本)
-```bash
-~/.openclaw/system/scripts/fis_maintenance.sh check
+# Search skills
+mcporter call 'exa.web_search_exa(query: "SKILL.md image processing", numResults: 5)'
 ```
 
 ---
 
-## Task Router (任务路由) - 自动判断使用 SubAgent
+## Directory Structure
 
-### Quick Check (快速判断)
-```python
-from task_router import should_use_subagent, classify_task
-
-# 判断是否应使用 SubAgent
-if should_use_subagent("帮我整理 downloads 文件夹"):
-    # 创建 SubAgent
-    card = manager.spawn(...)
-else:
-    # 主会话直接处理
-    pass
 ```
-
-### Detailed Classification (详细分类)
-```python
-from task_router import classify_task
-
-result = classify_task("统计 workspace 下的代码行数")
-print(result)
-# {
-#     "use_subagent": True,
-#     "reason": "检测到长任务关键词: '统计'",
-#     "estimated_time": "medium",
-#     "recommended_role": "researcher"
-# }
+research-uav-gpr/
+├── tickets/
+│   ├── active/          # Active task tickets
+│   └── completed/       # Archived tickets
+├── knowledge/           # Shared knowledge (QMD-indexed)
+├── results/             # Research outputs
+└── .fis3.1/
+    └── notifications.json
 ```
-
-### Pattern Matching (模式匹配)
-```python
-from task_router import match_task_pattern
-
-pattern = match_task_pattern("帮我检查代码")
-print(pattern["use_subagent"])  # True/False
-print(pattern["role"])          # 推荐角色
-print(pattern["timeout"])       # 建议超时时间
-```
-
-### Auto-Routing Rule (自动路由规则)
-
-**使用 SubAgent 的场景:**
-- 文件整理、清理、批量处理
-- 代码统计、分析、检查
-- Git 操作（提交、同步）
-- 调研、研究类任务
-- 描述 >20 词的多步骤任务
-
-**主会话直接处理:**
-- 快速问答（是什么、为什么、怎么）
-- 解释说明类
-- 简单对比、推荐
-- 是/否 确认
 
 ---
 
-*FIS 3.1 Lite — Quality over Quantity (质胜于量) 🐱⚡*
+## Ticket Format
+
+```json
+{
+  "ticket_id": "TASK_CYBERMAO_20260219_001",
+  "agent_id": "worker-001",
+  "parent": "cybermao",
+  "role": "worker|reviewer|researcher|formatter",
+  "task": "Task description",
+  "status": "active|completed|timeout",
+  "created_at": "2026-02-19T21:00:00",
+  "completed_at": null,
+  "timeout_minutes": 60,
+  "resources": ["file_read", "web_search"],
+  "output_dir": "results/TASK_001/"
+}
+```
+
+---
+
+## Roles
+
+| Role | Purpose |
+|------|---------|
+| **worker** | Execute tasks, produce outputs |
+| **reviewer** | Quality check, verify outputs |
+| **researcher** | Investigate, analyze options |
+| **formatter** | Format, convert, cleanup |
+
+---
+
+## Workflow Patterns
+
+### Worker → Reviewer
+```
+1. Create worker ticket
+2. Worker executes → completes
+3. Create reviewer ticket
+4. Reviewer verifies → completes
+5. Archive both
+```
+
+### Parallel Workers
+```
+1. Create N worker tickets (sharded tasks)
+2. All workers execute in parallel
+3. Wait for all to complete
+4. Aggregate results
+5. Archive all
+```
+
+---
+
+## When to Delegate
+
+**Delegate (SubAgent)**:
+- Multiple specialist roles needed
+- Duration > 10 minutes
+- High failure impact
+- Batch processing
+
+**Direct Handling**:
+- Quick Q&A (< 5 min)
+- Simple explanation
+- One-step operations
+
+---
+
+## Design Principles
+
+1. **FIS = Workflow, QMD = Content**
+2. **File-first**: JSON + Markdown only
+3. **Zero pollution**: Don't touch others' Core Files
+4. **Quality over quantity**: Minimal components
+
+---
+
+*FIS 3.2.0-lite 🐱⚡*

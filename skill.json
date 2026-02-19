@@ -1,60 +1,64 @@
 {
   "name": "fis-architecture",
-  "version": "3.1.1",
-  "description": "Federal Intelligence System (FIS) 3.1 Lite - Multi-agent collaboration framework with fractal file system, zero Core File pollution, and SubAgent lifecycle management",
+  "version": "3.2.0-lite",
+  "description": "Federal Intelligence System (FIS) 3.2 Lite - Simplified multi-agent workflow framework. FIS manages workflow, QMD manages content. File-based ticket system with badge generation.",
   "author": "CyberMao",
   "license": "MIT",
   "keywords": [
     "fis",
     "multi-agent",
-    "collaboration",
-    "fractal",
-    "subagent",
-    "lifecycle",
+    "workflow",
+    "tickets",
+    "qmd",
     "badge",
-    "openclaw"
+    "openclaw",
+    "simplified"
   ],
-  "homepage": "https://github.com/cybermao/fis-architecture",
+  "homepage": "https://github.com/MuseLinn/fis-architecture",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cybermao/fis-architecture.git"
+    "url": "https://github.com/MuseLinn/fis-architecture.git"
   },
   "bugs": {
-    "url": "https://github.com/cybermao/fis-architecture/issues"
+    "url": "https://github.com/MuseLinn/fis-architecture/issues"
   },
   "main": "SKILL.md",
   "files": [
     "SKILL.md",
+    "README.md",
     "QUICK_REFERENCE.md",
+    "AGENT_GUIDE.md",
+    "CONFIGURATION.md",
+    "POST_INSTALL.md",
     "INSTALL_CHECKLIST.md",
     "lib/",
-    "examples/"
+    "archive/deprecated/README.md"
   ],
   "engines": {
     "python": ">=3.10"
   },
   "dependencies": {
-    "pillow": ">=9.0.0"
+    "pillow": ">=9.0.0",
+    "qrcode": ">=7.0"
   },
   "openclaw": {
-    "minVersion": "0.5.0",
+    "minVersion": "2026.2.15",
     "skillType": "architecture",
     "capabilities": [
       "multi-agent",
-      "subagent-management",
-      "badge-generation",
+      "workflow",
       "ticket-management",
-      "deadlock-detection"
+      "badge-generation"
     ],
     "forAgents": {
-      "whenToUse": "复杂多角色协作任务(>30分钟或失败影响大)",
-      "whenNotToUse": "简单查询、单线任务、10分钟内可完成",
+      "whenToUse": "Complex multi-role tasks requiring workflow tracking",
+      "whenNotToUse": "Simple queries or tasks completable in < 10 minutes",
       "entryPoint": "AGENT_GUIDE.md",
-      "keyDecision": "使用决策树判断是否创建 SubAgent"
+      "keyDecision": "Use decision tree to determine SubAgent delegation"
     },
     "postInstall": {
-      "required": true,
-      "message": "⚠️ 必须运行初始化脚本: python3 examples/init_fis31.py",
+      "required": false,
+      "message": "FIS 3.2 requires no initialization. Create ticket files directly.",
       "docs": "POST_INSTALL.md"
     }
   }

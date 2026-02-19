@@ -757,6 +757,91 @@ def generate_badge_with_task(agent_name, role, task_desc, task_requirements, out
     return generator.create_badge(agent_data)
 
 
+def generate_multi_badge(cards_data, output_name=None):
+    """
+    生成多工牌拼接图 (2x2 网格或垂直排列)
+    
+    Args:
+        cards_data: [{'agent_name': 'Worker-1', 'role': 'worker', 'task_desc': '...', 'task_requirements': [...]}, ...]
+        output_name: 输出文件名
+    
+    Returns:
+        拼接后的图片路径
+    """
+    from PIL import Image
+    
+    generator = BadgeGenerator()
+    
+    # 生成单个工牌
+    badge_images = []
+    for card in cards_data:
+        agent_data = {
+            'name': card['agent_name'],
+            'id': f"CYBERMAO-SA-{datetime.now().year}-{datetime.now().strftime('%m%d%H%M')}",
+            'role': card['role'],
+            'task_id': f"#{card['role'][:4].upper()}-{datetime.now().strftime('%m%d')}",
+            'soul': f'"{card["task_desc"][:30]}..."' if len(card["task_desc"]) > 30 else f'"{card["task_desc"]}"',
+            'responsibilities': [
+                "Execute task with precision and quality",
+                "Report progress within deadline",
+                "Follow FIS 3.1 protocol standards",
+            ],
+            'output_formats': 'MARKDOWN | JSON | TXT',
+            'task_requirements': card.get('task_requirements', ['Report.md']),
+            'barcode_id': f"OC-{datetime.now().year}-{card['role'][:4].upper()}-{datetime.now().strftime('%m%d')}",
+            'status': 'PENDING',
+        }
+        badge_path = generator.create_badge(agent_data)
+        badge_images.append(Image.open(badge_path))
+    
+    # 拼接图片
+    n = len(badge_images)
+    if n == 0:
+        return None
+    
+    # 获取单张尺寸
+    w, h = badge_images[0].size
+    
+    # 决定布局: 2x2 网格或垂直排列
+    if n <= 2:
+        # 垂直排列
+        total_h = h * n
+        collage = Image.new('RGB', (w, total_h), (245, 245, 240))
+        for i, img in enumerate(badge_images):
+            collage.paste(img, (0, i * h))
+    elif n <= 4:
+        # 2x2 网格
+        cols = 2
+        rows = (n + 1) // 2
+        total_w = w * cols
+        total_h = h * rows
+        collage = Image.new('RGB', (total_w, total_h), (245, 245, 240))
+        for i, img in enumerate(badge_images):
+            row = i // cols
+            col = i % cols
+            collage.paste(img, (col * w, row * h))
+    else:
+        # 超过4张，垂直排列
+        total_h = h * n
+        collage = Image.new('RGB', (w, total_h), (245, 245, 240))
+        for i, img in enumerate(badge_images):
+            collage.paste(img, (0, i * h))
+    
+    # 保存
+    output_dir = Path.home() / ".openclaw" / "output" / "badges"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    if output_name is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_name = f"badge_multi_{timestamp}.png"
+    
+    output_path = output_dir / output_name
+    collage.save(output_path, 'PNG', quality=95)
+    print(f"✅ Multi-badge collage: {output_path}")
+    
+    return str(output_path)
+
+
 if __name__ == "__main__":
     # 测试生成工卡
     print("=== FIS 3.1 Badge Generator v7.0 ===")
